@@ -66,10 +66,9 @@ Mapping digital colors to physical pens.
 
 ### **3.3 Hatching Engine (HatchProcessor)**
 
-The core of the tool. It converts filled areas into line patterns.
+The core of the tool. It converts filled areas into line patterns using a **Scanline Algorithm**.
 
-* **Smart Bounds:** Instead of filling the entire page, it calculates the exact bounding box of each shape (rect, polygon, polyline) to generate lines only where needed.
-* **Clipping:** It creates a non-destructive \<clipPath\> referencing the original shape geometry, ensuring lines stop cleanly at the edges.
+* **Geometric Baking:** Instead of using SVG clipPath (which some plotters ignore), the engine calculates the exact geometric intersection of hatch lines and the shape. The output contains only raw \<line\> elements, guaranteed to work on any hardware.
 * **Cross-Hatching:** Supports generating a second pass of lines at 90° to the first for denser textures.
 * **Filtering:** Can ignore shapes based on color (creating outlines) or size (ignoring "dust").
 
@@ -93,7 +92,7 @@ svgtoolbox \-i \<input\> \-o \<output\> \[options\]
 | \-i | \--input | File Path | **Required.** Source SVG file. |
 | \-o | \--output | File Path | **Required.** Destination path. |
 | \-p | \--palette | hex,hex... | Comma-separated list of allowed pen colors (e.g., \#000000,\#FF0000). |
-| \-w | \--stroke-width | Float | Global stroke width in pixels (e.g., 1.0). |
+| \-w | \--stroke-width | Float | Global stroke width in pixels (e.g., 1.0). Default: 1.0. |
 | \-h | \--hatch | None | Enable the hatching engine. |
 
 ### **Hatching Control**
@@ -128,7 +127,7 @@ svgtoolbox \\
 \-i raw\_output.svg \\  
 \-o plot\_ready.svg \\  
 \-p "\#000000" \\  
-\-w 1.0 \\  
+\-w 0.5 \\  
 \-h
 
 ### **Scenario B: Text & Logos (Hybrid Mode)**
@@ -149,22 +148,24 @@ You are using three pens: Cyan, Magenta, and Black.
 * **Magenta:** Medium tone.
 * **Black:** Deep shadow (tight grid).
 
+\<\!-- end list \--\>  
 svgtoolbox \\  
 \-i input.svg \\  
 \-o texture\_study.svg \\  
 \-p "\#00FFFF,\#FF00FF,\#000000" \\  
 \-h \\  
-\--style "\#00FFFF:45:6.0:false;\#FF00FF:135:4.0:false;\#000000:0:2.0:true" \\  
+\-w 0.5 \\  
+\--style "\#00FFFF:45:6.0:false;\#FF00FF:135:4.0:false;\#000000:0:8.0:true" \\  
 \--min-area 50
 
 ## **6\. Troubleshooting**
 
 * **Issue:** Output file size is huge (\>2MB).
-    * **Reason:** High-density cross-hatching generates thousands of vectors.
-    * **Fix:** Increase \--hatch-gap (e.g., 2.0 \-\> 3.0) or use \--min-area 500 to ignore small details.
-* **Issue:** Plotter draws a box around the hatching.
-    * **Reason:** Your plotter driver might not support SVG clipPath.
-    * **Fix:** Open the file in Inkscape. If it looks correct, the SVG is valid. You may need to select the objects and use Object \-\> Clip \-\> Set (or flatten) depending on your specific driver (e.g., older axicli versions).
+    * **Reason:** "Baking" geometry (converting fills to thousands of actual line vectors) creates heavy files. Cross-hatching doubles this count. High density (low gap) multiplies it.
+    * **Fix:** Increase \--hatch-gap (e.g., 2.0 \-\> 4.0) or use \--min-area 500 to prevent hatching small noise.
+* **Issue:** Preview looks like a solid block of color.
+    * **Reason:** The stroke width is too thick for the gap density.
+    * **Fix:** Use the \-w 0.5 (or lower) flag to simulate a finer pen tip.
 * **Issue:** Colors aren't separating.
     * **Reason:** Input SVG might use CSS classes (.cls-1 { fill: red }) instead of direct attributes (fill="red").
     * **Fix:** SVGToolBox is optimized for attribute-based SVGs. Use "Export as Presentation Attributes" in your design software.
