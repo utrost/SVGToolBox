@@ -10,8 +10,9 @@ public record Config(
         float strokeWidth,
         List<Color> palette,
         boolean enableHatching,
-        HatchStyle globalStyle,            // Replaces individual angle/gap fields
-        Map<String, HatchStyle> overrides, // New: Map Hex -> Style
+        HatchStyle globalStyle,
+        Map<String, HatchStyle> overrides,
         List<Color> noHatchColors,
-        double minHatchArea
+        double minHatchArea,
+        double simplifyTolerance // New field: > 0 enables simplification
 ) {}

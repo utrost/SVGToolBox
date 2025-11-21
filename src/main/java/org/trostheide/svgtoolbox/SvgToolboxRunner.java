@@ -32,6 +32,9 @@ public class SvgToolboxRunner {
         options.addOption(Option.builder().longOpt("no-hatch").hasArg().desc("Colors to skip").build());
         options.addOption(Option.builder().longOpt("min-area").hasArg().type(Number.class).desc("Min area (px^2)").build());
 
+        // Optimization Flags
+        options.addOption(Option.builder().longOpt("simplify").hasArg().type(Number.class).desc("Simplify tolerance (e.g., 0.5)").build());
+
         CommandLineParser parser = new DefaultParser();
 
         try {
@@ -82,7 +85,8 @@ public class SvgToolboxRunner {
                 globalStyle,
                 overrides,
                 noHatch,
-                cmd.hasOption("min-area") ? Double.parseDouble(cmd.getOptionValue("min-area")) : 100.0
+                cmd.hasOption("min-area") ? Double.parseDouble(cmd.getOptionValue("min-area")) : 100.0,
+                cmd.hasOption("simplify") ? Double.parseDouble(cmd.getOptionValue("simplify")) : 0.0
         );
     }
 
@@ -102,7 +106,14 @@ public class SvgToolboxRunner {
         List<Processor> pipeline = new ArrayList<>();
         pipeline.add(new StrokeWidthProcessor());
         pipeline.add(new PaletteProcessor());
+
+        // 1. Simplify paths to remove noise
+        pipeline.add(new SimplifyProcessor());
+
+        // 2. Generate hatched lines (inside groups with transforms)
         pipeline.add(new HatchProcessor());
+
+        // 4. Organize into layers
         pipeline.add(new LayerProcessor());
 
         for (Processor p : pipeline) {
