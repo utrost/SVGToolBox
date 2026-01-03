@@ -14,5 +14,9 @@ public record Config(
         Map<String, HatchStyle> overrides,
         List<Color> noHatchColors,
         double minHatchArea,
-        double simplifyTolerance // New field: > 0 enables simplification
-) {}
+        double simplifyTolerance,
+        String hatchPattern,
+        double rotationDegrees,
+        boolean printStats,
+        java.awt.geom.Rectangle2D cropBounds) {
+}

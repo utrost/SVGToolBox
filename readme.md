@@ -69,6 +69,13 @@ For convenience, run the included install script to build the project and create
 
 You can now run svgtoolbox from any directory.
 
+### **Running the GUI**
+
+For a visual interface with live preview:
+./start_gui.sh
+
+Note: Requires an environment with a display (X11/Wayland). Uses Java Swing.
+
 ## **3\. Functional Modules (Processors)**
 
 ### **3.1 Stroke Normalizer (StrokeWidthProcessor)**
@@ -120,6 +127,9 @@ svgtoolbox \-i \<input\> \-o \<output\> \[options\]
 | \-p | \--palette | hex,hex... | Comma-separated list of allowed pen colors (e.g., \#000000,\#FF0000). |
 | \-w | \--stroke-width | Float | Global stroke width in pixels (e.g., 1.0). Default: 1.0. |
 | \-h | \--hatch | None | Enable the hatching engine. |
+| \-r | \--rotate | Degrees | Rotate input 90, 180, or 270 degrees clockwise. |
+|  | \--crop | String | Crop input to standard size (A4, Letter, 500x500) or centered bounds. |
+|  | \--stats | None | Print geometric statistics (Total Length per Layer) after processing. |
 
 ### **Hatching Control**
 

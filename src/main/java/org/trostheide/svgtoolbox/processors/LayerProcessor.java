@@ -7,7 +7,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.awt.geom.Rectangle2D;
+import java.awt.Shape;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,7 +35,7 @@ public class LayerProcessor implements Processor {
         int movedCount = 0;
         for (Element shape : allShapes) {
             if (shape.getParentNode() instanceof Element &&
-                    "layer".equals(((Element)shape.getParentNode()).getAttributeNS(INKSCAPE_NS, "groupmode"))) {
+                    "layer".equals(((Element) shape.getParentNode()).getAttributeNS(INKSCAPE_NS, "groupmode"))) {
                 continue;
             }
 
@@ -46,11 +46,13 @@ public class LayerProcessor implements Processor {
             }
 
             // IMPORTANT: Bake the color onto the shape itself before moving it.
-            // This fixes "Paint undefined" errors if the color was inherited from a parent group we are leaving.
+            // This fixes "Paint undefined" errors if the color was inherited from a parent
+            // group we are leaving.
             if (!shape.hasAttribute("stroke")) {
                 shape.setAttribute("stroke", color);
             }
-            // Also ensure stroke-width is preserved if inherited, though usually HatchProcessor sets it on group
+            // Also ensure stroke-width is preserved if inherited, though usually
+            // HatchProcessor sets it on group
             // For now, assuming HatchProcessor set it on group, we might lose width too.
             // Ideally HatchProcessor sets it on the group, so we should grab that too.
             String width = getStrokeWidth(shape);
@@ -101,7 +103,8 @@ public class LayerProcessor implements Processor {
                     maxY = Math.max(maxY, Math.max(y1, y2));
                     found = true;
                 }
-            } catch (Exception e) { /* ignore */ }
+            } catch (Exception e) {
+                /* ignore */ }
         }
 
         if (found && maxX > minX && maxY > minY) {
@@ -162,7 +165,8 @@ public class LayerProcessor implements Processor {
     private boolean hasChildElements(Element el) {
         NodeList children = el.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
-            if (children.item(i) instanceof Element) return true;
+            if (children.item(i) instanceof Element)
+                return true;
         }
         return false;
     }

@@ -9,7 +9,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 import java.awt.Shape;
-import java.awt.geom.Path2D;
+
 import java.awt.geom.PathIterator;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,8 @@ public class SimplifyProcessor implements Processor {
 
     @Override
     public void process(Document doc, Config config) {
-        if (config.simplifyTolerance() <= 0) return;
+        if (config.simplifyTolerance() <= 0)
+            return;
 
         NodeList elements = doc.getElementsByTagName("*");
         int count = 0;
@@ -45,7 +46,8 @@ public class SimplifyProcessor implements Processor {
             return false; // Can't simplify rects/circles without converting them first
         }
 
-        if (points.size() < 3) return false;
+        if (points.size() < 3)
+            return false;
 
         // 2. Apply Ramer-Douglas-Peucker
         List<Point> simplified = ramerDouglasPeucker(points, tolerance);
@@ -61,7 +63,8 @@ public class SimplifyProcessor implements Processor {
 
     // --- Ramer-Douglas-Peucker Algorithm ---
     private List<Point> ramerDouglasPeucker(List<Point> points, double epsilon) {
-        if (points.size() < 3) return points;
+        if (points.size() < 3)
+            return points;
 
         double dmax = 0;
         int index = 0;
@@ -90,7 +93,8 @@ public class SimplifyProcessor implements Processor {
     }
 
     private double perpendicularDistance(Point p, Point lineStart, Point lineEnd) {
-        double area = Math.abs(0.5 * (lineStart.x * lineEnd.y + lineEnd.x * p.y + p.x * lineStart.y - lineEnd.x * lineStart.y - p.x * lineEnd.y - lineStart.x * p.y));
+        double area = Math.abs(0.5 * (lineStart.x * lineEnd.y + lineEnd.x * p.y + p.x * lineStart.y
+                - lineEnd.x * lineStart.y - p.x * lineEnd.y - lineStart.x * p.y));
         double bottom = Math.sqrt(Math.pow(lineStart.x - lineEnd.x, 2) + Math.pow(lineStart.y - lineEnd.y, 2));
         return (area * 2.0) / bottom;
     }
@@ -110,7 +114,8 @@ public class SimplifyProcessor implements Processor {
 
     private List<Point> parsePathPoints(String d) {
         // Naive: Convert path to flattened iterator points
-        // This is lossy for curves (turns them into lines), which is effectively what "Simplify" does anyway
+        // This is lossy for curves (turns them into lines), which is effectively what
+        // "Simplify" does anyway
         List<Point> list = new ArrayList<>();
         PathParser parser = new PathParser();
         AWTPathProducer producer = new AWTPathProducer();
@@ -142,7 +147,8 @@ public class SimplifyProcessor implements Processor {
     }
 
     private String toPathString(List<Point> points) {
-        if (points.isEmpty()) return "";
+        if (points.isEmpty())
+            return "";
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("M %.2f %.2f ", points.get(0).x, points.get(0).y));
         for (int i = 1; i < points.size(); i++) {
@@ -152,5 +158,6 @@ public class SimplifyProcessor implements Processor {
         return sb.toString();
     }
 
-    record Point(double x, double y) {}
+    record Point(double x, double y) {
+    }
 }
