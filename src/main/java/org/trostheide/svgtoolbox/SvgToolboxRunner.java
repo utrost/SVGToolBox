@@ -46,6 +46,7 @@ public class SvgToolboxRunner {
                 .desc("Rotate degrees (90, 180...)").build());
         options.addOption(Option.builder().longOpt("stats").desc("Print statistics").build());
         options.addOption(Option.builder().longOpt("crop").hasArg().desc("Crop (WxH, A4, Letter)").build());
+        options.addOption(Option.builder().longOpt("optimize").desc("Optimize path order for plotting").build());
 
         CommandLineParser parser = new DefaultParser();
 
@@ -102,7 +103,8 @@ public class SvgToolboxRunner {
                 cmd.getOptionValue("pattern", "linear"),
                 Double.parseDouble(cmd.getOptionValue("rotate", "0.0")),
                 cmd.hasOption("stats"),
-                parseCrop(cmd.getOptionValue("crop")));
+                parseCrop(cmd.getOptionValue("crop")),
+                cmd.hasOption("optimize"));
     }
 
     public static java.awt.geom.Rectangle2D parseCrop(String arg) {
@@ -167,6 +169,10 @@ public class SvgToolboxRunner {
 
         // 5. Crop
         pipeline.add(new CropProcessor());
+
+        if (config.optimizePaths()) {
+            pipeline.add(new PathOptimizeProcessor());
+        }
 
         for (Processor p : pipeline) {
             p.process(doc, config);

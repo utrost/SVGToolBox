@@ -14,6 +14,7 @@ import java.util.ArrayList;
 public class ControlPanel extends JPanel {
 
     private JCheckBox chkEnableHatching;
+    private JCheckBox chkOptimize;
     private JComboBox<String> cmbPattern;
     private JSlider sldStrokeWidth;
     private MainWindow parent;
@@ -50,6 +51,9 @@ public class ControlPanel extends JPanel {
 
         chkEnableHatching = new JCheckBox("Enable Hatching", true);
         p.add(chkEnableHatching);
+
+        chkOptimize = new JCheckBox("Optimize Path Travel", false);
+        p.add(chkOptimize);
 
         p.add(new JLabel("Pattern:"));
         cmbPattern = new JComboBox<>(new String[] { "linear", "cross", "zigzag", "wave", "dot" });
@@ -120,7 +124,8 @@ public class ControlPanel extends JPanel {
                     (String) cmbPattern.getSelectedItem(),
                     currentRotation, // Rotate
                     false, // Stats
-                    SvgToolboxRunner.parseCrop(cropVal) // Crop
+                    SvgToolboxRunner.parseCrop(cropVal), // Crop
+                    chkOptimize.isSelected() // Optimize
             );
 
             SvgToolboxRunner.processPipeline(config);
@@ -161,7 +166,8 @@ public class ControlPanel extends JPanel {
                         (String) cmbPattern.getSelectedItem(),
                         currentRotation,
                         false,
-                        SvgToolboxRunner.parseCrop(cropVal));
+                        SvgToolboxRunner.parseCrop(cropVal),
+                        chkOptimize.isSelected()); // Optimize
                 SvgToolboxRunner.processPipeline(config);
                 JOptionPane.showMessageDialog(this, "Saved to " + fc.getSelectedFile().getName());
             } catch (Exception e) {

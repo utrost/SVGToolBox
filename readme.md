@@ -9,8 +9,9 @@ DOM \--\> P1\[StrokeWidthProcessor\]
 P1 \--\> P2\[PaletteProcessor\]  
 P2 \--\> P3\[SimplifyProcessor\]  
 P3 \--\> P4\[HatchProcessor\]  
-P4 \--\> P5\[LayerProcessor\]  
-P5 \--\> Output\[Output SVG\]
+P4 \--\> P5\[PathOptimizeProcessor\]  
+P5 \--\> P6\[LayerProcessor\]  
+P6 \--\> Output\[Output SVG\]
 
     subgraph "Pipeline"  
     P1(Normalize Strokes)  
@@ -28,19 +29,19 @@ SVGToolBox is built on the **Pipeline Pattern**, ensuring a clear separation of 
 
 The application lifecycle is linear and stateless:
 
-1. **Initialization:** The SvgToolboxRunner parses CLI arguments and builds a configuration record.
-2. **Loading:** The input SVG is parsed into a W3C DOM Object using Batik's SAXSVGDocumentFactory.
-3. **Processing:** The DOM is passed sequentially through a list of Processor implementations. Each processor modifies the DOM in-place.
-    * StrokeWidthProcessor: Standardizes line weights.
-    * PaletteProcessor: Maps colors to physical pens.
-    * SimplifyProcessor: Reduces path complexity (Ramer-Douglas-Peucker).
-    * HatchProcessor: Converts fills to lines using geometric baking (Scanline).
-    * LayerProcessor: Flattens groups and organizes into Inkscape layers.
-4. **Serialization:** The modified DOM is written back to disk as a standard SVG file.
+1.  **Initialization:** The SvgToolboxRunner parses CLI arguments and builds a configuration record.
+2.  **Loading:** The input SVG is parsed into a W3C DOM Object using Batik's SAXSVGDocumentFactory.
+3.  **Processing:** The DOM is passed sequentially through a list of Processor implementations. Each processor modifies the DOM in-place.
+    *   StrokeWidthProcessor: Standardizes line weights.
+    *   PaletteProcessor: Maps colors to physical pens.
+    *   SimplifyProcessor: Reduces path complexity (Ramer-Douglas-Peucker).
+    *   HatchProcessor: Converts fills to lines using geometric baking (Scanline).
+    *   PathOptimizeProcessor: Reorders paths to minimize pen travel distance (Traveling Salesman greedy approach).
+    *   LayerProcessor: Flattens groups and organizes into Inkscape layers.
+4.  **Serialization:** The modified DOM is written back to disk as a standard SVG file.
 
 ### **1.2 Key Components**
 
-* **Processor Interface:** The contract for all modules.  
   public interface Processor {  
   void process(Document doc, Config config);  
   }
@@ -111,7 +112,15 @@ Prepares the file for multi-pen plotting.
 
 * It inspects the stroke color of every element (handling inheritance).
 * It moves elements out of deep nesting and into flat top-level groups with inkscape:groupmode="layer".
+* It moves elements out of deep nesting and into flat top-level groups with inkscape:groupmode="layer".
 * **Auto-Fit:** It recalculates the viewBox of the root SVG to perfectly frame the generated content, ensuring visibility.
+
+### **3.6 Path Optimizer (PathOptimizeProcessor)**
+
+Reduces the time your plotter spends with the pen up (traveling between lines).
+
+*   **Algorithm:** Greedy Nearest Neighbor. Starts at (0,0) and jumps to the nearest start point of any unvisited line.
+*   **Result:** Significantly faster plotting for files with many disconnected lines (like stippling or hatching).
 
 ## **4\. CLI Reference**
 
@@ -129,6 +138,7 @@ svgtoolbox \-i \<input\> \-o \<output\> \[options\]
 | \-h | \--hatch | None | Enable the hatching engine. |
 | \-r | \--rotate | Degrees | Rotate input 90, 180, or 270 degrees clockwise. |
 |  | \--crop | String | Crop input to standard size (A4, Letter, 500x500) or centered bounds. |
+|  | \--optimize | None | **Optimize path order** to minimize plotter travel time. |
 |  | \--stats | None | Print geometric statistics (Total Length per Layer) after processing. |
 
 ### **Hatching Control**
