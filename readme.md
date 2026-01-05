@@ -63,6 +63,19 @@ mvn clean package
 The executable will be located at:  
 target/svgtoolbox-1.0-SNAPSHOT.jar
 
+### **Windows Installation**
+
+1.  **Prerequisites:**
+    *   Ensure **Java 17** is installed. The script specifically looks for it in `C:\Program Files\Eclipse Adoptium\jdk-17.0.9.9-hotspot`, but works with any Java 17+ in your system PATH.
+    *   **Maven** is required if you need to build the project from source (the script attempts to build automatically if the jar is missing).
+
+2.  **Running the GUI:**
+    Double-click `start_gui.bat` or run it from PowerShell:
+    ```powershell
+    .\start_gui.bat
+    ```
+    This script handles the build process and environment setup automatically.
+
 ### **Installation Script**
 
 For convenience, run the included install script to build the project and create a global alias:  
