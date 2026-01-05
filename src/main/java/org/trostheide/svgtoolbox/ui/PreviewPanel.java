@@ -5,6 +5,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.NoninvertibleTransformException;
 import java.io.File;
 
 public class PreviewPanel extends JPanel {
@@ -121,5 +123,40 @@ public class PreviewPanel extends JPanel {
 
     public JSVGCanvas getCanvas() {
         return svgCanvas;
+    }
+
+    public Rectangle2D getViewportBounds() {
+        AffineTransform at = svgCanvas.getRenderingTransform();
+        if (at == null)
+            at = new AffineTransform();
+
+        try {
+            AffineTransform inverse = at.createInverse();
+            Rectangle visibleRect = svgCanvas.getVisibleRect(); // Component bounds
+
+            // Map the corners of the component to SVG space
+            // This handles zoom and pan
+            // Actually, we can just transform the rect
+
+            // Wait, getVisibleRect returns the component's visible area (0,0,w,h usually)
+            // We want to know which part of the SVG is effectively "under" this rect.
+
+            // 0,0 in screen space -> ? in SVG space
+            java.awt.geom.Point2D.Double tl = new java.awt.geom.Point2D.Double(visibleRect.getX(), visibleRect.getY());
+            java.awt.geom.Point2D.Double br = new java.awt.geom.Point2D.Double(visibleRect.getMaxX(),
+                    visibleRect.getMaxY());
+
+            java.awt.geom.Point2D svgTL = inverse.transform(tl, null);
+            java.awt.geom.Point2D svgBR = inverse.transform(br, null);
+
+            return new Rectangle2D.Double(
+                    Math.min(svgTL.getX(), svgBR.getX()),
+                    Math.min(svgTL.getY(), svgBR.getY()),
+                    Math.abs(svgBR.getX() - svgTL.getX()),
+                    Math.abs(svgBR.getY() - svgTL.getY()));
+
+        } catch (NoninvertibleTransformException e) {
+            return null;
+        }
     }
 }

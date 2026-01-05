@@ -86,7 +86,7 @@ public class ControlPanel extends JPanel {
         p.add(pRotate);
 
         p.add(new JLabel("Crop to:"));
-        cmbCrop = new JComboBox<>(new String[] { "None", "A4", "Letter", "500x500" });
+        cmbCrop = new JComboBox<>(new String[] { "None", "Current View", "A4", "Letter", "500x500" });
         p.add(cmbCrop);
 
         return p;
@@ -106,8 +106,13 @@ public class ControlPanel extends JPanel {
             File tempOut = File.createTempFile("preview_", ".svg");
 
             String cropVal = (String) cmbCrop.getSelectedItem();
-            if ("None".equals(cropVal))
-                cropVal = null;
+            java.awt.geom.Rectangle2D cropRect = null;
+
+            if ("Current View".equals(cropVal)) {
+                cropRect = parent.getPreviewPanel().getViewportBounds();
+            } else if (!"None".equals(cropVal)) {
+                cropRect = SvgToolboxRunner.parseCrop(cropVal);
+            }
 
             // Build Config from GUI
             Config config = new Config(
@@ -124,7 +129,7 @@ public class ControlPanel extends JPanel {
                     (String) cmbPattern.getSelectedItem(),
                     currentRotation, // Rotate
                     false, // Stats
-                    SvgToolboxRunner.parseCrop(cropVal), // Crop
+                    cropRect, // Crop
                     chkOptimize.isSelected() // Optimize
             );
 
@@ -149,8 +154,13 @@ public class ControlPanel extends JPanel {
             try {
                 // Re-run pipeline to the chosen output file
                 String cropVal = (String) cmbCrop.getSelectedItem();
-                if ("None".equals(cropVal))
-                    cropVal = null;
+                java.awt.geom.Rectangle2D cropRect = null;
+
+                if ("Current View".equals(cropVal)) {
+                    cropRect = parent.getPreviewPanel().getViewportBounds();
+                } else if (!"None".equals(cropVal)) {
+                    cropRect = SvgToolboxRunner.parseCrop(cropVal);
+                }
 
                 Config config = new Config(
                         currentInputFile.getAbsolutePath(),
@@ -166,7 +176,7 @@ public class ControlPanel extends JPanel {
                         (String) cmbPattern.getSelectedItem(),
                         currentRotation,
                         false,
-                        SvgToolboxRunner.parseCrop(cropVal),
+                        cropRect,
                         chkOptimize.isSelected()); // Optimize
                 SvgToolboxRunner.processPipeline(config);
                 JOptionPane.showMessageDialog(this, "Saved to " + fc.getSelectedFile().getName());
