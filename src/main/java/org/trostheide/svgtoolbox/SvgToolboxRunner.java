@@ -89,22 +89,23 @@ public class SvgToolboxRunner {
             }
         }
 
-        return new Config(
-                cmd.getOptionValue("i"),
-                cmd.getOptionValue("o"),
-                (float) Double.parseDouble(cmd.getOptionValue("stroke-width", "0")),
-                palette,
-                cmd.hasOption("h"),
-                globalStyle,
-                overrides,
-                noHatch,
-                Double.parseDouble(cmd.getOptionValue("min-area", "100.0")),
-                Double.parseDouble(cmd.getOptionValue("simplify", "0.0")),
-                cmd.getOptionValue("pattern", "linear"),
-                Double.parseDouble(cmd.getOptionValue("rotate", "0.0")),
-                cmd.hasOption("stats"),
-                parseCrop(cmd.getOptionValue("crop")),
-                cmd.hasOption("optimize"));
+        return new Config.Builder()
+                .inputPath(cmd.getOptionValue("i"))
+                .outputPath(cmd.getOptionValue("o"))
+                .strokeWidth((float) Double.parseDouble(cmd.getOptionValue("stroke-width", "0")))
+                .palette(palette)
+                .enableHatching(cmd.hasOption("h"))
+                .globalStyle(globalStyle)
+                .overrides(overrides)
+                .noHatchColors(noHatch)
+                .minHatchArea(Double.parseDouble(cmd.getOptionValue("min-area", "100.0")))
+                .simplifyTolerance(Double.parseDouble(cmd.getOptionValue("simplify", "0.0")))
+                .hatchPattern(cmd.getOptionValue("pattern", "linear"))
+                .rotationDegrees(Double.parseDouble(cmd.getOptionValue("rotate", "0.0")))
+                .printStats(cmd.hasOption("stats"))
+                .cropBounds(parseCrop(cmd.getOptionValue("crop")))
+                .optimizePaths(cmd.hasOption("optimize"))
+                .build();
     }
 
     public static java.awt.geom.Rectangle2D parseCrop(String arg) {

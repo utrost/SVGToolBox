@@ -1,15 +1,12 @@
 package org.trostheide.svgtoolbox.ui;
 
 import org.trostheide.svgtoolbox.Config;
-import org.trostheide.svgtoolbox.HatchStyle;
 import org.trostheide.svgtoolbox.SvgToolboxRunner;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.io.File;
-import java.util.Collections;
-import java.util.ArrayList;
 
 public class ControlPanel extends JPanel {
 
@@ -21,6 +18,9 @@ public class ControlPanel extends JPanel {
 
     private File currentInputFile;
 
+    private JButton btnProcess;
+    private JButton btnSave;
+
     public ControlPanel(MainWindow parent) {
         this.parent = parent;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -30,18 +30,24 @@ public class ControlPanel extends JPanel {
         add(createGeometrySettings());
         add(Box.createVerticalGlue());
 
-        JButton btnProcess = new JButton("Update Preview");
+        btnProcess = new JButton("Update Preview");
         btnProcess.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnProcess.addActionListener(e -> updatePreview());
         add(btnProcess);
 
-        JButton btnSave = new JButton("Save As...");
+        btnSave = new JButton("Save As...");
         btnSave.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnSave.addActionListener(e -> saveOutput());
         add(Box.createVerticalStrut(10));
         add(btnSave);
 
         add(Box.createVerticalStrut(20));
+    }
+
+    private void setControlsEnabled(boolean b) {
+        btnProcess.setEnabled(b);
+        btnSave.setEnabled(b);
+        btnProcess.setText(b ? "Update Preview" : "Processing...");
     }
 
     private JPanel createGlobalSettings() {
@@ -103,7 +109,7 @@ public class ControlPanel extends JPanel {
 
         try {
             // Create a temp file for output
-            File tempOut = File.createTempFile("preview_", ".svg");
+            final File tempOut = File.createTempFile("preview_", ".svg");
 
             String cropVal = (String) cmbCrop.getSelectedItem();
             java.awt.geom.Rectangle2D cropRect = null;
@@ -115,32 +121,43 @@ public class ControlPanel extends JPanel {
             }
 
             // Build Config from GUI
-            Config config = new Config(
-                    currentInputFile.getAbsolutePath(),
-                    tempOut.getAbsolutePath(),
-                    sldStrokeWidth.getValue() / 10f,
-                    new ArrayList<>(), // Palette
-                    chkEnableHatching.isSelected(),
-                    new HatchStyle(45, 5, false), // Default style for now
-                    Collections.emptyMap(),
-                    Collections.emptyList(),
-                    100.0, // minArea
-                    0.5, // simplify
-                    (String) cmbPattern.getSelectedItem(),
-                    currentRotation, // Rotate
-                    false, // Stats
-                    cropRect, // Crop
-                    chkOptimize.isSelected() // Optimize
-            );
+            final Config config = new Config.Builder()
+                    .inputPath(currentInputFile.getAbsolutePath())
+                    .outputPath(tempOut.getAbsolutePath())
+                    .strokeWidth(sldStrokeWidth.getValue() / 10f)
+                    .enableHatching(chkEnableHatching.isSelected())
+                    .hatchPattern((String) cmbPattern.getSelectedItem())
+                    .rotationDegrees(currentRotation)
+                    .cropBounds(cropRect)
+                    .optimizePaths(chkOptimize.isSelected())
+                    .build();
 
-            SvgToolboxRunner.processPipeline(config);
+            setControlsEnabled(false);
 
-            // Update preview
-            parent.getPreviewPanel().loadFile(tempOut);
+            SwingWorker<Void, Void> worker = new SwingWorker<>() {
+                @Override
+                protected Void doInBackground() throws Exception {
+                    SvgToolboxRunner.processPipeline(config);
+                    return null;
+                }
+
+                @Override
+                protected void done() {
+                    setControlsEnabled(true);
+                    try {
+                        get(); // throw exception if any occurred
+                        parent.getPreviewPanel().loadFile(tempOut);
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(ControlPanel.this, "Error processing SVG: " + ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            };
+            worker.execute();
 
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage());
+            JOptionPane.showMessageDialog(this, "Error setup: " + e.getMessage());
         }
     }
 
@@ -162,27 +179,42 @@ public class ControlPanel extends JPanel {
                     cropRect = SvgToolboxRunner.parseCrop(cropVal);
                 }
 
-                Config config = new Config(
-                        currentInputFile.getAbsolutePath(),
-                        fc.getSelectedFile().getAbsolutePath(),
-                        sldStrokeWidth.getValue() / 10f,
-                        new ArrayList<>(),
-                        chkEnableHatching.isSelected(),
-                        new HatchStyle(45, 5, false),
-                        Collections.emptyMap(),
-                        Collections.emptyList(),
-                        100.0,
-                        0.5,
-                        (String) cmbPattern.getSelectedItem(),
-                        currentRotation,
-                        false,
-                        cropRect,
-                        chkOptimize.isSelected()); // Optimize
-                SvgToolboxRunner.processPipeline(config);
-                JOptionPane.showMessageDialog(this, "Saved to " + fc.getSelectedFile().getName());
+                final Config config = new Config.Builder()
+                        .inputPath(currentInputFile.getAbsolutePath())
+                        .outputPath(fc.getSelectedFile().getAbsolutePath())
+                        .strokeWidth(sldStrokeWidth.getValue() / 10f)
+                        .enableHatching(chkEnableHatching.isSelected())
+                        .hatchPattern((String) cmbPattern.getSelectedItem())
+                        .rotationDegrees(currentRotation)
+                        .cropBounds(cropRect)
+                        .optimizePaths(chkOptimize.isSelected())
+                        .build();
+
+                setControlsEnabled(false);
+
+                SwingWorker<Void, Void> worker = new SwingWorker<>() {
+                    @Override
+                    protected Void doInBackground() throws Exception {
+                        SvgToolboxRunner.processPipeline(config);
+                        return null;
+                    }
+
+                    @Override
+                    protected void done() {
+                        setControlsEnabled(true);
+                        try {
+                            get(); // throw exception if any occurred
+                            JOptionPane.showMessageDialog(ControlPanel.this, "Saved to " + fc.getSelectedFile().getName());
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            JOptionPane.showMessageDialog(ControlPanel.this, "Error saving SVG: " + ex.getCause().getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                };
+                worker.execute();
             } catch (Exception e) {
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error saving: " + e.getMessage());
+                JOptionPane.showMessageDialog(this, "Error setup: " + e.getMessage());
             }
         }
     }

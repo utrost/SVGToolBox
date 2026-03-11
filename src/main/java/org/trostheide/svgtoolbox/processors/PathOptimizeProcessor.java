@@ -112,41 +112,77 @@ public class PathOptimizeProcessor implements Processor {
                 double y = Double.parseDouble(e.getAttribute(start ? "y1" : "y2"));
                 return new Point2D.Double(x, y);
             } else if (tag.equals("path")) {
-                // Parse 'd'. Simple heuristic: finding first M/L or last coordinates.
                 String d = e.getAttribute("d");
-                if (d.isEmpty())
+                if (d == null || d.trim().isEmpty()) {
                     return new Point2D.Double(0, 0);
-
-                // Very naive parsing for speed. Ideally use Batik's parser.
-                // Or better: HatchProcessor produces lines, so mostly lines?
-                // But SimplifyProcessor produces paths.
-
-                // Let's try to extract numbers.
-                // M x y ...
-                // If it's a complicated path, end point is tricky without full parse.
-                // Assuming standard "M x y ... L x y"
-
-                String[] tokens = d.replaceAll("[A-Za-z]", " ").trim().split("\\s+");
-                if (tokens.length >= 2) {
-                    if (start) {
-                        return new Point2D.Double(Double.parseDouble(tokens[0]), Double.parseDouble(tokens[1]));
-                    } else {
-                        // Last two numbers
-                        return new Point2D.Double(Double.parseDouble(tokens[tokens.length - 2]),
-                                Double.parseDouble(tokens[tokens.length - 1]));
-                    }
                 }
+
+                org.apache.batik.parser.AWTPathProducer producer = new org.apache.batik.parser.AWTPathProducer();
+                producer.setWindingRule(java.awt.geom.Path2D.WIND_EVEN_ODD);
+                org.apache.batik.parser.PathParser parser = new org.apache.batik.parser.PathParser();
+                parser.setPathHandler(producer);
+                parser.parse(d);
+
+                java.awt.Shape shape = producer.getShape();
+                java.awt.geom.PathIterator pi = shape.getPathIterator(null);
+                
+                double[] coords = new double[6];
+                Point2D.Double firstPoint = null;
+                Point2D.Double lastPoint = null;
+                Point2D.Double currentSubpathStart = null;
+
+                while (!pi.isDone()) {
+                    int type = pi.currentSegment(coords);
+                    switch (type) {
+                        case java.awt.geom.PathIterator.SEG_MOVETO:
+                            Point2D.Double pMove = new Point2D.Double(coords[0], coords[1]);
+                            if (firstPoint == null) {
+                                firstPoint = pMove;
+                            }
+                            lastPoint = pMove;
+                            currentSubpathStart = pMove;
+                            break;
+                        case java.awt.geom.PathIterator.SEG_LINETO:
+                            lastPoint = new Point2D.Double(coords[0], coords[1]);
+                            break;
+                        case java.awt.geom.PathIterator.SEG_QUADTO:
+                            lastPoint = new Point2D.Double(coords[2], coords[3]);
+                            break;
+                        case java.awt.geom.PathIterator.SEG_CUBICTO:
+                            lastPoint = new Point2D.Double(coords[4], coords[5]);
+                            break;
+                        case java.awt.geom.PathIterator.SEG_CLOSE:
+                            if (currentSubpathStart != null) {
+                                lastPoint = currentSubpathStart;
+                            }
+                            break;
+                    }
+                    if (start && firstPoint != null) {
+                        return firstPoint;
+                    }
+                    pi.next();
+                }
+                
+                if (start && firstPoint != null) {
+                    return firstPoint;
+                }
+                if (!start && lastPoint != null) {
+                    return lastPoint;
+                }
+
             } else if (tag.equals("rect")) {
                 double x = Double.parseDouble(e.getAttribute("x"));
                 double y = Double.parseDouble(e.getAttribute("y"));
-                // Start is Top-Left. End is... Top-Left? Or should we trace perim?
-                // For plotting "rect" is usually converted to path.
-                // But if it remains rect, pen usually ends where it started?
                 return new Point2D.Double(x, y);
+            } else if (tag.equals("circle") || tag.equals("ellipse")) {
+                 double cx = Double.parseDouble(e.getAttribute("cx"));
+                 double cy = Double.parseDouble(e.getAttribute("cy"));
+                 double rx = tag.equals("circle") ? Double.parseDouble(e.getAttribute("r")) : Double.parseDouble(e.getAttribute("rx"));
+                 // Approximating start/end of a circle/ellipse as its right-most point (0 degrees)
+                 return new Point2D.Double(cx + rx, cy);
             }
-            // Add other shapes defaults
         } catch (Exception ex) {
-            // ignore
+            System.err.println("Warning: Could not parse geometry for " + tag + ": " + ex.getMessage());
         }
         return new Point2D.Double(0, 0);
     }

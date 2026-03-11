@@ -5,19 +5,120 @@ import java.util.List;
 import java.util.Map;
 
 public record Config(
-                String inputPath,
-                String outputPath,
-                float strokeWidth,
-                List<Color> palette,
-                boolean enableHatching,
-                HatchStyle globalStyle,
-                Map<String, HatchStyle> overrides,
-                List<Color> noHatchColors,
-                double minHatchArea,
-                double simplifyTolerance,
-                String hatchPattern,
-                double rotationDegrees,
-                boolean printStats,
-                java.awt.geom.Rectangle2D cropBounds,
-                boolean optimizePaths) {
+        String inputPath,
+        String outputPath,
+        float strokeWidth,
+        List<Color> palette,
+        boolean enableHatching,
+        HatchStyle globalStyle,
+        Map<String, HatchStyle> overrides,
+        List<Color> noHatchColors,
+        double minHatchArea,
+        double simplifyTolerance,
+        String hatchPattern,
+        double rotationDegrees,
+        boolean printStats,
+        java.awt.geom.Rectangle2D cropBounds,
+        boolean optimizePaths) {
+
+    public static class Builder {
+        private String inputPath;
+        private String outputPath;
+        private float strokeWidth = 0f;
+        private List<Color> palette = List.of();
+        private boolean enableHatching = false;
+        private HatchStyle globalStyle = new HatchStyle(45.0, 5.0, false);
+        private Map<String, HatchStyle> overrides = Map.of();
+        private List<Color> noHatchColors = List.of();
+        private double minHatchArea = 100.0;
+        private double simplifyTolerance = 0.0;
+        private String hatchPattern = "linear";
+        private double rotationDegrees = 0.0;
+        private boolean printStats = false;
+        private java.awt.geom.Rectangle2D cropBounds = null;
+        private boolean optimizePaths = false;
+
+        public Builder inputPath(String inputPath) {
+            this.inputPath = inputPath;
+            return this;
+        }
+
+        public Builder outputPath(String outputPath) {
+            this.outputPath = outputPath;
+            return this;
+        }
+
+        public Builder strokeWidth(float strokeWidth) {
+            this.strokeWidth = strokeWidth;
+            return this;
+        }
+
+        public Builder palette(List<Color> palette) {
+            this.palette = palette != null ? palette : List.of();
+            return this;
+        }
+
+        public Builder enableHatching(boolean enableHatching) {
+            this.enableHatching = enableHatching;
+            return this;
+        }
+
+        public Builder globalStyle(HatchStyle globalStyle) {
+            this.globalStyle = globalStyle != null ? globalStyle : new HatchStyle(45.0, 5.0, false);
+            return this;
+        }
+
+        public Builder overrides(Map<String, HatchStyle> overrides) {
+            this.overrides = overrides != null ? overrides : Map.of();
+            return this;
+        }
+
+        public Builder noHatchColors(List<Color> noHatchColors) {
+            this.noHatchColors = noHatchColors != null ? noHatchColors : List.of();
+            return this;
+        }
+
+        public Builder minHatchArea(double minHatchArea) {
+            this.minHatchArea = minHatchArea;
+            return this;
+        }
+
+        public Builder simplifyTolerance(double simplifyTolerance) {
+            this.simplifyTolerance = simplifyTolerance;
+            return this;
+        }
+
+        public Builder hatchPattern(String hatchPattern) {
+            this.hatchPattern = hatchPattern != null ? hatchPattern : "linear";
+            return this;
+        }
+
+        public Builder rotationDegrees(double rotationDegrees) {
+            this.rotationDegrees = rotationDegrees;
+            return this;
+        }
+
+        public Builder printStats(boolean printStats) {
+            this.printStats = printStats;
+            return this;
+        }
+
+        public Builder cropBounds(java.awt.geom.Rectangle2D cropBounds) {
+            this.cropBounds = cropBounds;
+            return this;
+        }
+
+        public Builder optimizePaths(boolean optimizePaths) {
+            this.optimizePaths = optimizePaths;
+            return this;
+        }
+
+        public Config build() {
+            return new Config(
+                    inputPath, outputPath, strokeWidth, palette, enableHatching,
+                    globalStyle, overrides, noHatchColors, minHatchArea, simplifyTolerance,
+                    hatchPattern, rotationDegrees, printStats, cropBounds, optimizePaths
+            );
+        }
+    }
 }
