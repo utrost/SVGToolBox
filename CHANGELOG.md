@@ -10,10 +10,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - GitHub Actions CI pipeline (Maven build + test on Java 17/21)
 - CONTRIBUTING.md
 - This CHANGELOG
+- `Config.Builder` pattern for scalable and fluent configuration management
+- Validation scripts for automated testing of CLI and guidelines for manual Swing GUI testing
 
 ### Changed
 - README.md rewritten for clarity and completeness
 - .gitignore expanded (IDE files, build artifacts, logs)
+- **Path Parsing:** `PathOptimizeProcessor` now uses robust Apache Batik parsing instead of naive regex, fixing coordinate corruption on complex SVGs.
+- **UI Responsiveness:** Swing GUI now processes SVGs asynchronously via `SwingWorker`, preventing the Event Dispatch Thread (EDT) from freezing during heavy processing.
 
 ### Removed
 - Stale files: `benchmark_stress.log`, `dependency-reduced-pom.xml`, `.idea/` directory

@@ -20,7 +20,7 @@ Each stage is a `Processor` that modifies the SVG DOM in-place. The pipeline is 
 | **PaletteProcessor** | Quantize colors to available pens (Euclidean distance) |
 | **SimplifyProcessor** | Reduce path complexity (Ramer-Douglas-Peucker) |
 | **HatchProcessor** | Convert fills to line patterns (scanline, world-space baking) |
-| **PathOptimizeProcessor** | Reorder paths to minimize pen travel (greedy nearest neighbor) |
+| **PathOptimizeProcessor** | Reorder paths to minimize pen travel using Apache Batik for precise coordinate parsing and greedy nearest neighbor sorting |
 | **LayerProcessor** | Flatten groups into Inkscape layers, auto-fit viewBox |
 
 ## Prerequisites
@@ -57,7 +57,7 @@ svgtoolbox -i input.svg -o output.svg [options]
 .\start_gui.bat       # Windows
 ```
 
-Requires a display environment (X11/Wayland). Uses Java Swing with live preview.
+Requires a display environment (X11/Wayland). Uses Java Swing with live preview. The GUI performs heavy generative processing asynchronously ensuring the application remains responsive during optimization.
 
 ### Core Options
 
