@@ -11,7 +11,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 JAR_FILE="$PROJECT_ROOT/target/svgtoolbox-1.0-SNAPSHOT.jar"
 INPUT_FILE="$PROJECT_ROOT/example.svg"
-OUTPUT_FILE="$PROJECT_ROOT/Validation Scripts/cli_test_output.svg"
+OUTPUT_FILE="$PROJECT_ROOT/validation/cli_test_output.svg"
 
 # Ensure the project is built
 if [ ! -f "$JAR_FILE" ]; then
