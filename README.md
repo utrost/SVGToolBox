@@ -164,7 +164,7 @@ src/main/java/org/trostheide/svgtoolbox/
 
 ## License
 
-Private repository. All rights reserved.
+AGPL-3.0 — see [LICENSE](LICENSE).
 
 ## Contributing
 

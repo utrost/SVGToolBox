@@ -36,4 +36,5 @@ build/
 
 ### Build artifacts ###
 dependency-reduced-pom.xml
-*.logtest_results/
+*.log
+test_results/
