@@ -12,6 +12,8 @@ public record Config(
         boolean enableHatching,
         HatchStyle globalStyle,
         Map<String, HatchStyle> overrides,
+        Map<String, Float> strokeWidthOverrides,
+        List<String> hiddenLayers,
         List<Color> noHatchColors,
         double minHatchArea,
         double simplifyTolerance,
@@ -29,6 +31,8 @@ public record Config(
         private boolean enableHatching = false;
         private HatchStyle globalStyle = new HatchStyle(45.0, 5.0, false);
         private Map<String, HatchStyle> overrides = Map.of();
+        private Map<String, Float> strokeWidthOverrides = Map.of();
+        private List<String> hiddenLayers = List.of();
         private List<Color> noHatchColors = List.of();
         private double minHatchArea = 100.0;
         private double simplifyTolerance = 0.0;
@@ -70,6 +74,16 @@ public record Config(
 
         public Builder overrides(Map<String, HatchStyle> overrides) {
             this.overrides = overrides != null ? overrides : Map.of();
+            return this;
+        }
+
+        public Builder strokeWidthOverrides(Map<String, Float> strokeWidthOverrides) {
+            this.strokeWidthOverrides = strokeWidthOverrides != null ? strokeWidthOverrides : Map.of();
+            return this;
+        }
+
+        public Builder hiddenLayers(List<String> hiddenLayers) {
+            this.hiddenLayers = hiddenLayers != null ? hiddenLayers : List.of();
             return this;
         }
 
@@ -116,7 +130,7 @@ public record Config(
         public Config build() {
             return new Config(
                     inputPath, outputPath, strokeWidth, palette, enableHatching,
-                    globalStyle, overrides, noHatchColors, minHatchArea, simplifyTolerance,
+                    globalStyle, overrides, strokeWidthOverrides, hiddenLayers, noHatchColors, minHatchArea, simplifyTolerance,
                     hatchPattern, rotationDegrees, printStats, cropBounds, optimizePaths
             );
         }

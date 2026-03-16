@@ -37,6 +37,9 @@ public class SvgToolboxRunner {
         options.addOption(
                 Option.builder().longOpt("min-area").hasArg().type(Number.class).desc("Min area (px^2)").build());
 
+        options.addOption(Option.builder().longOpt("hidden-layers").hasArg().desc("Comma-separated list of colors to hide").build());
+        options.addOption(Option.builder().longOpt("layer-width").hasArg().desc("Overrides: HEX:WIDTH;...").build());
+
         // Optimization Flags
         options.addOption(Option.builder().longOpt("simplify").hasArg().type(Number.class)
                 .desc("Simplify tolerance (e.g., 0.5)").build());
@@ -89,6 +92,31 @@ public class SvgToolboxRunner {
             }
         }
 
+        // 3. Parse Stroke Width Overrides (Format: #HEX:WIDTH;...)
+        Map<String, Float> strokeWidthOverrides = new HashMap<>();
+        if (cmd.hasOption("layer-width")) {
+            String[] entries = cmd.getOptionValue("layer-width").split(";");
+            for (String entry : entries) {
+                String[] parts = entry.split(":");
+                if (parts.length >= 2) {
+                    try {
+                        String hex = parts[0].trim().toLowerCase();
+                        float width = Float.parseFloat(parts[1]);
+                        strokeWidthOverrides.put(hex, width);
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+        }
+
+        // 4. Parse Hidden Layers
+        List<String> hiddenLayers = new ArrayList<>();
+        if (cmd.hasOption("hidden-layers")) {
+            String[] split = cmd.getOptionValue("hidden-layers").split(",");
+            for (String color : split) {
+                hiddenLayers.add(color.trim().toLowerCase());
+            }
+        }
+
         return new Config.Builder()
                 .inputPath(cmd.getOptionValue("i"))
                 .outputPath(cmd.getOptionValue("o"))
@@ -97,6 +125,8 @@ public class SvgToolboxRunner {
                 .enableHatching(cmd.hasOption("h"))
                 .globalStyle(globalStyle)
                 .overrides(overrides)
+                .strokeWidthOverrides(strokeWidthOverrides)
+                .hiddenLayers(hiddenLayers)
                 .noHatchColors(noHatch)
                 .minHatchArea(Double.parseDouble(cmd.getOptionValue("min-area", "100.0")))
                 .simplifyTolerance(Double.parseDouble(cmd.getOptionValue("simplify", "0.0")))
@@ -154,6 +184,7 @@ public class SvgToolboxRunner {
         Document doc = factory.createDocument(new File(config.inputPath()).toURI().toString());
 
         List<Processor> pipeline = new ArrayList<>();
+        pipeline.add(new VisibilityProcessor());
         pipeline.add(new StyleNormalizerProcessor());
         pipeline.add(new RotateProcessor());
         pipeline.add(new StrokeWidthProcessor());

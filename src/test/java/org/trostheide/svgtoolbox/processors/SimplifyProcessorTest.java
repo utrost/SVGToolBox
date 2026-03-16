@@ -23,7 +23,7 @@ class SimplifyProcessorTest {
 
         Config config = new Config(
                 "in", "out", 1.0f, Collections.emptyList(), false,
-                HatchStyle.of(45, 5), Collections.emptyMap(), Collections.emptyList(), 0.0,
+                HatchStyle.of(45, 5), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), 0.0,
                 1.0, "linear", 0.0, false, null, false // Tolerance, Pattern, Rotation, Stats, Crop, Optimize
         );
 
@@ -57,7 +57,7 @@ class SimplifyProcessorTest {
 
         Config config = new Config(
                 "in", "out", 1.0f, Collections.emptyList(), false,
-                HatchStyle.of(45, 5), Collections.emptyMap(), Collections.emptyList(), 0.0,
+                HatchStyle.of(45, 5), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), 0.0,
                 1.0, "linear", 0.0, false, null, false // Tolerance, Pattern, Rotation, Stats, Crop, Optimize
         );
 

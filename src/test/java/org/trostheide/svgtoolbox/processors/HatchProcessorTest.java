@@ -32,7 +32,7 @@ class HatchProcessorTest {
         Config config = new Config(
                 "in", "out", 1.0f, Collections.emptyList(), true,
                 new HatchStyle(45.0, 10.0, false),
-                Collections.emptyMap(), Collections.emptyList(), 1.0, 0.0, "linear", 0.0, false, null, false);
+                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), 1.0, 0.0, "linear", 0.0, false, null, false);
 
         HatchProcessor processor = new HatchProcessor();
         processor.process(doc, config);
@@ -77,7 +77,7 @@ class HatchProcessorTest {
         Config config = new Config(
                 "in", "out", 1.0f, Collections.emptyList(), true,
                 new HatchStyle(0.0, 2.0, false),
-                Collections.emptyMap(), Collections.emptyList(), 100.0, 0.0, "linear", 0.0, false, null, false);
+                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), 100.0, 0.0, "linear", 0.0, false, null, false);
 
         HatchProcessor processor = new HatchProcessor();
         processor.process(doc, config);
