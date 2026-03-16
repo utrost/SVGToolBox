@@ -120,14 +120,15 @@ public class ControlPanel extends JPanel {
     }
 
     private void loadSvg() {
-        JFileChooser fc = new JFileChooser();
-        fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("SVG Files (*.svg)", "svg"));
+        java.awt.FileDialog fd = new java.awt.FileDialog(parent, "Load SVG...", java.awt.FileDialog.LOAD);
+        fd.setFile("*.svg"); // Generic filter hint
         if (currentInputFile != null) {
-            fc.setCurrentDirectory(currentInputFile.getParentFile());
+            fd.setDirectory(currentInputFile.getParent());
         }
         
-        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File selected = fc.getSelectedFile();
+        fd.setVisible(true);
+        if (fd.getFile() != null) {
+            File selected = new File(fd.getDirectory(), fd.getFile());
             parent.setInputFile(selected); // This will implicitly call this.setInputFile()
         }
     }
