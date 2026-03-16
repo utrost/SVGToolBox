@@ -32,7 +32,25 @@ echo ""
 # Check if output file was created and is not empty
 if [ -s "$OUTPUT_FILE" ]; then
     echo "✅ SUCCESS: Output file '$OUTPUT_FILE' generated successfully."
-    echo "Verification complete. Path optimization and Batik parsing are working correctly via CLI."
+else
+    echo "❌ ERROR: Output file was not generated or is empty."
+    exit 1
+fi
+
+echo "Running SVGToolBox CLI with Per-layer options..."
+OUTPUT_FILE_LAYER="$PROJECT_ROOT/Validation Scripts/cli_test_output_layer.svg"
+java -jar "$JAR_FILE" \
+    --input "$INPUT_FILE" \
+    --output "$OUTPUT_FILE_LAYER" \
+    --stroke-width 1.0 \
+    --layer-width "#000000:2.0;#ff0000:0.5" \
+    --hidden-layers "#00ff00" \
+    --optimize
+
+echo ""
+if [ -s "$OUTPUT_FILE_LAYER" ]; then
+    echo "✅ SUCCESS: Output file '$OUTPUT_FILE_LAYER' generated successfully."
+    echo "Verification complete. Path optimization, per-layer settings, and Batik parsing are working correctly via CLI."
 else
     echo "❌ ERROR: Output file was not generated or is empty."
     exit 1

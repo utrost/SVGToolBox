@@ -31,6 +31,11 @@ Each stage is a `Processor` that modifies the SVG DOM in-place. The pipeline is 
 ## Build
 
 ```bash
+./build.sh
+```
+
+Alternatively, use maven directly:
+```bash
 mvn clean package
 ```
 
@@ -57,7 +62,7 @@ svgtoolbox -i input.svg -o output.svg [options]
 .\start_gui.bat       # Windows
 ```
 
-Requires a display environment (X11/Wayland). Uses Java Swing with live preview. The GUI performs heavy generative processing asynchronously ensuring the application remains responsive during optimization.
+Requires a display environment (X11/Wayland). Uses Java Swing with live preview. The GUI provides a powerful "Layer Overrides" panel to configure hatching, stroke width, and export visibility dynamically per-layer. The heavy generative processing runs asynchronously, ensuring the application remains responsive during optimization.
 
 ### Core Options
 
@@ -86,7 +91,9 @@ Requires a display environment (X11/Wayland). Uses Java Swing with live preview.
 ### Per-Color Styling
 
 ```bash
--S "HEX:ANGLE:GAP:CROSSHATCH;..."
+-S, --style "HEX:ANGLE:GAP:CROSSHATCH;..."
+--layer-width "HEX:WIDTH;HEX:WIDTH"
+--hidden-layers "HEX,HEX"
 ```
 
 Example — three pens with different treatments:
@@ -132,6 +139,7 @@ src/main/java/org/trostheide/svgtoolbox/
 │   ├── ShapeParser.java       # Geometry extraction
 │   └── SvgStatistics.java     # Layer statistics
 ├── processors/                # Pipeline stages
+│   ├── VisibilityProcessor
 │   ├── StrokeWidthProcessor
 │   ├── PaletteProcessor
 │   ├── SimplifyProcessor

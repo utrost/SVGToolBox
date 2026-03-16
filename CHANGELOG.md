@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - This CHANGELOG
 - `Config.Builder` pattern for scalable and fluent configuration management
 - Validation scripts for automated testing of CLI and guidelines for manual Swing GUI testing
+- **Per-layer Configuration:** Added `--layer-width` and `--hidden-layers` CLI arguments for per-layer styling and visibility.
+- **GUI Enhancements:** New "Load SVG..." button, dynamic "Layer Overrides" table for per-color hatching, stroke width, and export visibility.
+- **Build Script:** Added `build.sh` for easy compilation from source.
+- `VisibilityProcessor` and `SvgAnalyzer` to support layer isolation and UI integration.
 
 ### Changed
 - README.md rewritten for clarity and completeness
