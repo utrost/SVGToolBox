@@ -164,19 +164,19 @@ public class ControlPanel extends JPanel {
         if (currentInputFile == null) return;
 
         try {
-            java.util.Map<String, String> layerNames = org.trostheide.svgtoolbox.core.SvgAnalyzer.extractLayerNames(currentInputFile);
+            java.util.List<org.trostheide.svgtoolbox.core.SvgAnalyzer.LayerInfo> layers =
+                org.trostheide.svgtoolbox.core.SvgAnalyzer.extractLayers(currentInputFile);
             
-            if (layerNames.isEmpty()) {
-                layerSettingsPanel.add(new JLabel("No colored layers found."));
+            if (layers.isEmpty()) {
+                layerSettingsPanel.add(new JLabel("No layers found."));
             } else {
-                for (java.util.Map.Entry<String, String> entry : layerNames.entrySet()) {
-                    String colorHex = entry.getKey();
-                    String layerName = entry.getValue();
+                for (org.trostheide.svgtoolbox.core.SvgAnalyzer.LayerInfo layer : layers) {
+                    String colorHex = layer.primaryColor;
 
                     JPanel row = new JPanel();
                     row.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
 
-                    // Color block
+                    // Color swatch(es)
                     JPanel colorBox = new JPanel();
                     colorBox.setPreferredSize(new Dimension(16, 16));
                     try {
@@ -184,10 +184,11 @@ public class ControlPanel extends JPanel {
                     } catch (Exception e) {}
                     row.add(colorBox);
 
-                    // Name
-                    JLabel lblName = new JLabel(layerName);
-                    lblName.setToolTipText(colorHex);
-                    lblName.setPreferredSize(new Dimension(120, 20)); // Keep it readable
+                    // Layer name
+                    String tooltip = layer.id + " — colors: " + String.join(", ", layer.colors);
+                    JLabel lblName = new JLabel(layer.label);
+                    lblName.setToolTipText(tooltip);
+                    lblName.setPreferredSize(new Dimension(120, 20));
                     row.add(lblName);
 
                     // Export Checkbox
@@ -213,12 +214,12 @@ public class ControlPanel extends JPanel {
                     row.add(sldWidth);
                     row.add(lblVal);
 
-                    // Store widgets
+                    // Store widgets keyed by layer id
                     LayerWidgets widgets = new LayerWidgets();
                     widgets.chkExport = chkExport;
                     widgets.cmbPattern = cmbPat;
                     widgets.sldStrokeWidth = sldWidth;
-                    layerWidgets.put(colorHex, widgets);
+                    layerWidgets.put(layer.id, widgets);
 
                     layerSettingsPanel.add(row);
                 }
