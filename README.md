@@ -91,7 +91,7 @@ Requires a display environment (X11/Wayland). Uses Java Swing with live preview.
 ### Per-Color Styling
 
 ```bash
--S, --style "HEX:ANGLE:GAP:CROSSHATCH;..."
+-S, --style "HEX:ANGLE:GAP:PATTERN;..."
 --layer-width "HEX:WIDTH;HEX:WIDTH"
 --hidden-layers "HEX,HEX"
 ```
@@ -103,7 +103,7 @@ svgtoolbox \
   -i input.svg -o output.svg \
   -p "#00FFFF,#FF00FF,#000000" \
   -h -w 0.5 \
-  --style "#00FFFF:45:6.0:false;#FF00FF:135:4.0:false;#000000:0:8.0:true" \
+  --style "#00FFFF:45:6.0:linear;#FF00FF:135:4.0:linear;#000000:0:8.0:cross" \
   --simplify 1.0 --min-area 100
 ```
 

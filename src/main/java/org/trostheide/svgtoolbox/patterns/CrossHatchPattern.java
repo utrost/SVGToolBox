@@ -19,7 +19,7 @@ public class CrossHatchPattern implements HatchPattern {
         result.addAll(linear.generate(shape, config, style));
 
         // Pass 2: Rotated 90 degrees
-        HatchStyle crossStyle = new HatchStyle(style.angle() + 90.0, style.gap(), false);
+        HatchStyle crossStyle = new HatchStyle(style.angle() + 90.0, style.gap(), "linear");
         result.addAll(linear.generate(shape, config, crossStyle));
 
         return result;

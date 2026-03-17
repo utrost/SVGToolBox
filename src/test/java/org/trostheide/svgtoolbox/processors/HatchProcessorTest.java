@@ -31,8 +31,8 @@ class HatchProcessorTest {
 
         Config config = new Config(
                 "in", "out", 1.0f, Collections.emptyList(), true,
-                new HatchStyle(45.0, 10.0, false),
-                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), 1.0, 0.0, "linear", 0.0, false, null, false);
+                new HatchStyle(45.0, 10.0, "linear"),
+                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), 1.0, 0.0, "linear", 45.0, 5.0, 0.0, false, null, false);
 
         HatchProcessor processor = new HatchProcessor();
         processor.process(doc, config);
@@ -76,8 +76,8 @@ class HatchProcessorTest {
         // Min area 100. Shape is 25. Should be ignored.
         Config config = new Config(
                 "in", "out", 1.0f, Collections.emptyList(), true,
-                new HatchStyle(0.0, 2.0, false),
-                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), 100.0, 0.0, "linear", 0.0, false, null, false);
+                new HatchStyle(0.0, 2.0, "linear"),
+                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), 100.0, 0.0, "linear", 45.0, 5.0, 0.0, false, null, false);
 
         HatchProcessor processor = new HatchProcessor();
         processor.process(doc, config);
@@ -102,5 +102,74 @@ class HatchProcessorTest {
         // Yes.
         NodeList rects = doc.getElementsByTagName("rect");
         assertEquals(1, rects.getLength(), "Small rect should remain untouched");
+    }
+
+    @Test
+    void testEmptyPattern() throws Exception {
+        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element root = doc.createElement("svg");
+        doc.appendChild(root);
+
+        Element rect = doc.createElement("rect");
+        rect.setAttribute("x", "0");
+        rect.setAttribute("y", "0");
+        rect.setAttribute("width", "100");
+        rect.setAttribute("height", "100");
+        rect.setAttribute("fill", "#0000FF"); // Blue
+        root.appendChild(rect);
+
+        Config config = new Config(
+                "in", "out", 2.0f, Collections.emptyList(), true,
+                new HatchStyle(45.0, 10.0, "empty"),
+                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), 1.0, 0.0, "empty", 45.0, 5.0, 0.0, false, null, false);
+
+        HatchProcessor processor = new HatchProcessor();
+        processor.process(doc, config);
+
+        // Verification
+        NodeList remainingRects = doc.getElementsByTagName("rect");
+        assertEquals(0, remainingRects.getLength(), "Original rect should be removed");
+
+        NodeList paths = doc.getElementsByTagName("path");
+        assertTrue(paths.getLength() > 0, "Should generate an outline path");
+        
+        NodeList lines = doc.getElementsByTagName("line");
+        assertEquals(0, lines.getLength(), "Should NOT generate hatch lines for 'empty'");
+    }
+
+    @Test
+    void testNonePattern() throws Exception {
+        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element root = doc.createElement("svg");
+        doc.appendChild(root);
+
+        Element rect = doc.createElement("rect");
+        rect.setAttribute("x", "0");
+        rect.setAttribute("y", "0");
+        rect.setAttribute("width", "100");
+        rect.setAttribute("height", "100");
+        rect.setAttribute("fill", "#FFFF00"); // Yellow
+        root.appendChild(rect);
+
+        Config config = new Config(
+                "in", "out", 1.0f, Collections.emptyList(), true,
+                new HatchStyle(45.0, 10.0, "none"),
+                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), Collections.emptyList(), 1.0, 0.0, "none", 45.0, 5.0, 0.0, false, null, false);
+
+        HatchProcessor processor = new HatchProcessor();
+        processor.process(doc, config);
+
+        // Verification
+        NodeList remainingRects = doc.getElementsByTagName("rect");
+        assertEquals(1, remainingRects.getLength(), "Original rect should NOT be removed");
+
+        Element remainingRect = (Element) remainingRects.item(0);
+        assertEquals("#FFFF00", remainingRect.getAttribute("fill"), "Fill should be preserved");
+
+        NodeList paths = doc.getElementsByTagName("path");
+        assertEquals(0, paths.getLength(), "Should NOT generate an outline path");
+        
+        NodeList lines = doc.getElementsByTagName("line");
+        assertEquals(0, lines.getLength(), "Should NOT generate hatch lines for 'none'");
     }
 }

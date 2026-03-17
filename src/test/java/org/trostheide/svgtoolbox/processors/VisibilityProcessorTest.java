@@ -41,7 +41,7 @@ class VisibilityProcessorTest {
                 HatchStyle.of(45, 5), Collections.emptyMap(), Collections.emptyMap(), 
                 List.of("#ff0000", "#0000ff"), // hidden layers
                 Collections.emptyList(), 0.0,
-                1.0, "linear", 0.0, false, null, false
+                1.0, "linear", 45.0, 5.0, 0.0, false, null, false
         );
 
         VisibilityProcessor processor = new VisibilityProcessor();

@@ -31,7 +31,7 @@ public class SvgToolboxRunner {
                 Option.builder().longOpt("hatch-angle").hasArg().type(Number.class).desc("Global angle").build());
         options.addOption(Option.builder().longOpt("hatch-gap").hasArg().type(Number.class).desc("Global gap").build());
         options.addOption(
-                Option.builder("S").longOpt("style").hasArg().desc("Overrides: HEX:ANGLE:GAP:CROSS;...").build());
+                Option.builder("S").longOpt("style").hasArg().desc("Overrides: HEX:ANGLE:GAP:PATTERN;...").build());
 
         options.addOption(Option.builder().longOpt("no-hatch").hasArg().desc("Colors to skip").build());
         options.addOption(
@@ -44,7 +44,7 @@ public class SvgToolboxRunner {
         options.addOption(Option.builder().longOpt("simplify").hasArg().type(Number.class)
                 .desc("Simplify tolerance (e.g., 0.5)").build());
         options.addOption(Option.builder().longOpt("pattern").hasArg()
-                .desc("Hatch pattern (linear, cross, zigzag, wave, dot)").build());
+                .desc("Hatch pattern (none, empty, linear, cross, zigzag, wave, dot)").build());
         options.addOption(Option.builder().longOpt("rotate").hasArg().type(Number.class)
                 .desc("Rotate degrees (90, 180...)").build());
         options.addOption(Option.builder().longOpt("stats").desc("Print statistics").build());
@@ -74,9 +74,9 @@ public class SvgToolboxRunner {
         // 1. Build Global Defaults
         double defAngle = cmd.hasOption("hatch-angle") ? Double.parseDouble(cmd.getOptionValue("hatch-angle")) : 45.0;
         double defGap = cmd.hasOption("hatch-gap") ? Double.parseDouble(cmd.getOptionValue("hatch-gap")) : 5.0;
-        HatchStyle globalStyle = new HatchStyle(defAngle, defGap, false);
+        HatchStyle globalStyle = new HatchStyle(defAngle, defGap, "linear");
 
-        // 2. Parse Overrides (Format: #HEX:ANGLE:GAP:CROSS;...)
+        // 2. Parse Overrides (Format: #HEX:ANGLE:GAP:PATTERN;...)
         Map<String, HatchStyle> overrides = new HashMap<>();
         if (cmd.hasOption("style")) {
             String[] entries = cmd.getOptionValue("style").split(";");
@@ -86,8 +86,11 @@ public class SvgToolboxRunner {
                     String hex = parts[0].trim().toLowerCase();
                     double angle = Double.parseDouble(parts[1]);
                     double gap = Double.parseDouble(parts[2]);
-                    boolean cross = parts.length > 3 && Boolean.parseBoolean(parts[3]);
-                    overrides.put(hex, new HatchStyle(angle, gap, cross));
+                    String pat = parts.length > 3 ? parts[3].trim() : "linear";
+                    // Maintain backward compatibility for boolean crosshatch 'true'
+                    if ("true".equalsIgnoreCase(pat)) pat = "cross";
+                    else if ("false".equalsIgnoreCase(pat)) pat = "linear";
+                    overrides.put(hex, new HatchStyle(angle, gap, pat));
                 }
             }
         }

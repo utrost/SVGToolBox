@@ -13,6 +13,8 @@ public class ControlPanel extends JPanel {
     private JCheckBox chkEnableHatching;
     private JCheckBox chkOptimize;
     private JComboBox<String> cmbPattern;
+    private JSpinner spinHatchAngle;
+    private JSpinner spinHatchGap;
     private JSlider sldStrokeWidth;
     private MainWindow parent;
 
@@ -25,7 +27,7 @@ public class ControlPanel extends JPanel {
     public ControlPanel(MainWindow parent) {
         this.parent = parent;
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setPreferredSize(new Dimension(450, 0));
+        setPreferredSize(new Dimension(500, 0)); // slightly wider for new spinners
         add(Box.createVerticalStrut(10));
 
         add(createGlobalSettings());
@@ -34,7 +36,7 @@ public class ControlPanel extends JPanel {
         // Use a scroll pane for layers since there could be many
         JScrollPane scroll = new JScrollPane(createLayerSettings());
         scroll.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        scroll.setPreferredSize(new Dimension(450, 250));
+        scroll.setPreferredSize(new Dimension(500, 250));
         add(scroll);
 
         add(Box.createVerticalGlue());
@@ -69,15 +71,29 @@ public class ControlPanel extends JPanel {
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         p.setBorder(new TitledBorder("Global Settings"));
 
+        JPanel pRow1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 2));
         chkEnableHatching = new JCheckBox("Enable Hatching", true);
-        p.add(chkEnableHatching);
-
+        pRow1.add(chkEnableHatching);
         chkOptimize = new JCheckBox("Optimize Path Travel", false);
-        p.add(chkOptimize);
+        pRow1.add(chkOptimize);
+        p.add(pRow1);
 
-        p.add(new JLabel("Pattern:"));
-        cmbPattern = new JComboBox<>(new String[] { "linear", "cross", "zigzag", "wave", "dot" });
-        p.add(cmbPattern);
+        JPanel pRow2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 2));
+        pRow2.add(new JLabel("Pattern:"));
+        cmbPattern = new JComboBox<>(new String[] { "none", "empty", "linear", "cross", "zigzag", "wave", "dot" });
+        cmbPattern.setSelectedItem("linear");
+        pRow2.add(cmbPattern);
+
+        pRow2.add(new JLabel("Angle (°):"));
+        spinHatchAngle = new JSpinner(new SpinnerNumberModel(45.0, 0.0, 360.0, 5.0));
+        spinHatchAngle.setPreferredSize(new Dimension(55, 22));
+        pRow2.add(spinHatchAngle);
+
+        pRow2.add(new JLabel("Gap (px):"));
+        spinHatchGap = new JSpinner(new SpinnerNumberModel(5.0, 0.1, 50.0, 0.5));
+        spinHatchGap.setPreferredSize(new Dimension(55, 22));
+        pRow2.add(spinHatchGap);
+        p.add(pRow2);
 
         JPanel pnlWidth = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         JLabel lblWidthDesc = new JLabel("Stroke Width (px): 1.0");
@@ -149,6 +165,8 @@ public class ControlPanel extends JPanel {
     private static class LayerWidgets {
         JCheckBox chkExport;
         JComboBox<String> cmbPattern;
+        JSpinner spinAngle;
+        JSpinner spinGap;
         JSlider sldStrokeWidth;
     }
 
@@ -177,7 +195,7 @@ public class ControlPanel extends JPanel {
                     String colorHex = layer.primaryColor;
 
                     JPanel row = new JPanel();
-                    row.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
+                    row.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 2));
 
                     // Color swatch(es)
                     JPanel colorBox = new JPanel();
@@ -191,7 +209,7 @@ public class ControlPanel extends JPanel {
                     String tooltip = layer.id + " — colors: " + String.join(", ", layer.colors);
                     JLabel lblName = new JLabel(layer.label);
                     lblName.setToolTipText(tooltip);
-                    lblName.setPreferredSize(new Dimension(120, 20));
+                    lblName.setPreferredSize(new Dimension(80, 20));
                     row.add(lblName);
 
                     // Export Checkbox
@@ -199,19 +217,35 @@ public class ControlPanel extends JPanel {
                     row.add(chkExport);
 
                     // Hatch Pattern
-                    JComboBox<String> cmbPat = new JComboBox<>(new String[] { "Global", "none", "linear", "cross", "zigzag", "wave", "dot" });
+                    JComboBox<String> cmbPat = new JComboBox<>(new String[] { "Global", "none", "empty", "linear", "cross", "zigzag", "wave", "dot" });
+                    cmbPat.setPreferredSize(new Dimension(80, 22));
                     row.add(cmbPat);
+
+                    // Angle
+                    row.add(new JLabel("A:"));
+                    JSpinner spinAngle = new JSpinner(new SpinnerNumberModel(45.0, 0.0, 360.0, 5.0));
+                    spinAngle.setPreferredSize(new Dimension(45, 22));
+                    spinAngle.setToolTipText("Angle Override");
+                    row.add(spinAngle);
+
+                    // Gap
+                    row.add(new JLabel("G:"));
+                    JSpinner spinGap = new JSpinner(new SpinnerNumberModel(5.0, 0.1, 50.0, 0.5));
+                    spinGap.setPreferredSize(new Dimension(50, 22));
+                    spinGap.setToolTipText("Gap Override");
+                    row.add(spinGap);
 
                     // Stroke Width
                     JSlider sldWidth = new JSlider(0, 50, 0); // 0 means use global
-                    sldWidth.setPreferredSize(new Dimension(80, 20));
+                    sldWidth.setPreferredSize(new Dimension(40, 20));
                     sldWidth.setToolTipText("0 = Use Global");
 
                     JLabel lblVal = new JLabel("Global");
-                    lblVal.setPreferredSize(new Dimension(45, 20));
+                    lblVal.setPreferredSize(new Dimension(35, 20));
+                    lblVal.setFont(new Font(lblVal.getFont().getName(), Font.PLAIN, 10));
                     sldWidth.addChangeListener(e -> {
                         int v = sldWidth.getValue();
-                        lblVal.setText(v == 0 ? "Global" : String.format("%.1fpx", v / 10f));
+                        lblVal.setText(v == 0 ? "Global" : String.format("%.1f", v / 10f));
                     });
 
                     row.add(sldWidth);
@@ -221,6 +255,8 @@ public class ControlPanel extends JPanel {
                     LayerWidgets widgets = new LayerWidgets();
                     widgets.chkExport = chkExport;
                     widgets.cmbPattern = cmbPat;
+                    widgets.spinAngle = spinAngle;
+                    widgets.spinGap = spinGap;
                     widgets.sldStrokeWidth = sldWidth;
                     layerWidgets.put(layer.id, widgets);
                     layerInfoMap.put(layer.id, layer);
@@ -252,6 +288,11 @@ public class ControlPanel extends JPanel {
         java.util.List<String> hiddenLayers = new java.util.ArrayList<>();
         java.util.List<Color> noHatchColors = new java.util.ArrayList<>();
 
+        // Get globals
+        double globalAngle = ((Number) spinHatchAngle.getValue()).doubleValue();
+        double globalGap = ((Number) spinHatchGap.getValue()).doubleValue();
+        String globalPattern = (String) cmbPattern.getSelectedItem();
+
         for (java.util.Map.Entry<String, LayerWidgets> entry : layerWidgets.entrySet()) {
             String layerId = entry.getKey();
             LayerWidgets lw = entry.getValue();
@@ -271,14 +312,16 @@ public class ControlPanel extends JPanel {
             }
 
             String pat = (String) lw.cmbPattern.getSelectedItem();
+            double angle = ((Number) lw.spinAngle.getValue()).doubleValue();
+            double gap = ((Number) lw.spinGap.getValue()).doubleValue();
+
             if ("none".equals(pat)) {
                 for (String c : layerColors) {
                     try { noHatchColors.add(Color.decode(c)); } catch(Exception ignored) {}
                 }
             } else if (!"Global".equals(pat)) {
-                boolean isCross = "cross".equals(pat);
                 for (String c : layerColors) {
-                    styleOverrides.put(c, new org.trostheide.svgtoolbox.HatchStyle(45.0, 5.0, isCross));
+                    styleOverrides.put(c, new org.trostheide.svgtoolbox.HatchStyle(angle, gap, pat));
                 }
             }
         }
@@ -289,6 +332,8 @@ public class ControlPanel extends JPanel {
                 .strokeWidth(sldStrokeWidth.getValue() / 10f)
                 .enableHatching(chkEnableHatching.isSelected())
                 .hatchPattern((String) cmbPattern.getSelectedItem())
+                .hatchAngle(globalAngle)
+                .hatchGap(globalGap)
                 .rotationDegrees(currentRotation)
                 .cropBounds(cropRect)
                 .optimizePaths(chkOptimize.isSelected())
@@ -296,6 +341,7 @@ public class ControlPanel extends JPanel {
                 .strokeWidthOverrides(strokeWidthOverrides)
                 .overrides(styleOverrides)
                 .noHatchColors(noHatchColors)
+                .globalStyle(new org.trostheide.svgtoolbox.HatchStyle(globalAngle, globalGap, globalPattern))
                 .build();
     }
 

@@ -71,6 +71,16 @@ public class HatchProcessor implements Processor {
     }
 
     private boolean hatchShape(Document doc, Element target, Config config) {
+        String color = target.getAttribute("fill");
+        HatchStyle style = getStyleFor(color, config);
+        String patternName = style.patternName().toLowerCase();
+
+        // If the pattern is exactly "none", we do not create hatches and we
+        // preserve the original element exactly as-is (do not remove fill).
+        if ("none".equals(patternName)) {
+            return false;
+        }
+
         // A. Get Local Geometry
         Shape localShape = org.trostheide.svgtoolbox.core.ShapeParser.parse(target);
         if (localShape == null)
@@ -88,13 +98,31 @@ public class HatchProcessor implements Processor {
             return false;
         }
 
-        String color = target.getAttribute("fill");
-        HatchStyle style = getStyleFor(color, config);
+        Element group = doc.createElementNS(SVG_NS, "g");
+        group.setAttribute("stroke", color);
+
+        double finalStrokeWidth = config.strokeWidth() > 0 ? config.strokeWidth() : 1.0;
+        group.setAttribute("stroke-width", String.format(Locale.US, "%.2f", finalStrokeWidth));
+        group.setAttribute("fill", "none");
+
+        // "empty" logic: we just apply the outline, no hatches.
+        if ("empty".equals(patternName)) {
+            // We can just append the equivalent outline path
+            Element outline = doc.createElementNS(SVG_NS, "path");
+            outline.setAttribute("d", getPathData(worldShape));
+            outline.setAttribute("fill", "none");
+            outline.setAttribute("stroke", color);
+            outline.setAttribute("stroke-width", String.format(Locale.US, "%.2f", finalStrokeWidth));
+            
+            group.appendChild(outline);
+            doc.getDocumentElement().appendChild(group);
+            target.getParentNode().removeChild(target);
+            return true;
+        }
 
         // E. Generate Lines (Delegated to Strategy)
         org.trostheide.svgtoolbox.patterns.HatchPattern pattern;
 
-        String patternName = config.hatchPattern().toLowerCase();
         switch (patternName) {
             case "cross":
                 pattern = new org.trostheide.svgtoolbox.patterns.CrossHatchPattern();
@@ -106,27 +134,24 @@ public class HatchProcessor implements Processor {
                 pattern = new org.trostheide.svgtoolbox.patterns.WaveHatchPattern();
                 break;
             case "dot":
-                pattern = new org.trostheide.svgtoolbox.patterns.DotHatchPattern();
-                break;
+                 pattern = new org.trostheide.svgtoolbox.patterns.DotHatchPattern();
+                 break;
             case "linear":
             default:
-                if (style.crossHatch()) {
-                    pattern = new org.trostheide.svgtoolbox.patterns.CrossHatchPattern();
-                } else {
-                    pattern = new org.trostheide.svgtoolbox.patterns.LinearHatchPattern();
-                }
+                pattern = new org.trostheide.svgtoolbox.patterns.LinearHatchPattern();
                 break;
         }
 
         List<Shape> hatchShapes = pattern.generate(worldShape, config, style);
 
+        // Optional: append original outline so it has bounds? Some plotters like outline + fill.
+        // Let's add the outline path as well to "close" the hatch visually.
+        Element outline = doc.createElementNS(SVG_NS, "path");
+        outline.setAttribute("d", getPathData(worldShape));
+        outline.setAttribute("fill", "none");
+        group.appendChild(outline);
+
         // F. Serialize lines
-        Element group = doc.createElementNS(SVG_NS, "g");
-        group.setAttribute("stroke", color);
-
-        double finalStrokeWidth = config.strokeWidth() > 0 ? config.strokeWidth() : 1.0;
-        group.setAttribute("stroke-width", String.format(Locale.US, "%.2f", finalStrokeWidth));
-
         for (Shape s : hatchShapes) {
             if (s instanceof Line2D) {
                 Line2D l = (Line2D) s;
@@ -138,29 +163,10 @@ public class HatchProcessor implements Processor {
                 group.appendChild(line);
             } else if (s instanceof org.apache.batik.ext.awt.geom.ExtendedGeneralPath
                     || s instanceof java.awt.geom.Path2D) {
-                // Serialize Paths (ZigZag, Wave)
-                java.awt.geom.PathIterator pi = s.getPathIterator(null);
-                StringBuilder d = new StringBuilder();
-                double[] c = new double[6];
-                while (!pi.isDone()) {
-                    int type = pi.currentSegment(c);
-                    switch (type) {
-                        case java.awt.geom.PathIterator.SEG_MOVETO:
-                            d.append(String.format(Locale.US, "M%.4f,%.4f ", c[0], c[1]));
-                            break;
-                        case java.awt.geom.PathIterator.SEG_LINETO:
-                            d.append(String.format(Locale.US, "L%.4f,%.4f ", c[0], c[1]));
-                            break;
-                        case java.awt.geom.PathIterator.SEG_CLOSE:
-                            d.append("Z ");
-                            break;
-                        // Quad/Cubic not generated by our patterns, but good to handle?
-                    }
-                    pi.next();
-                }
+                
                 Element path = doc.createElementNS(SVG_NS, "path");
-                path.setAttribute("d", d.toString().trim());
-                path.setAttribute("fill", "none"); // Ensure hatch lines are strokes only
+                path.setAttribute("d", getPathData(s));
+                path.setAttribute("fill", "none");
                 group.appendChild(path);
             } else if (s instanceof java.awt.geom.Ellipse2D) {
                 // Serialize Dots
@@ -169,10 +175,6 @@ public class HatchProcessor implements Processor {
                 circle.setAttribute("cx", String.format(Locale.US, "%.4f", e.getCenterX()));
                 circle.setAttribute("cy", String.format(Locale.US, "%.4f", e.getCenterY()));
                 circle.setAttribute("r", String.format(Locale.US, "%.4f", e.getWidth() / 2.0));
-                // Dots should probably be filled? Or stroked?
-                // If it's a stipple, it's usually small filled dots.
-                // But the group has 'stroke' color.
-                // Let's set fill to current color, stroke to none for DOTS.
                 circle.setAttribute("fill", color);
                 circle.setAttribute("stroke", "none");
                 group.appendChild(circle);
@@ -184,6 +186,34 @@ public class HatchProcessor implements Processor {
         target.getParentNode().removeChild(target);
 
         return true;
+    }
+
+    private String getPathData(Shape s) {
+        java.awt.geom.PathIterator pi = s.getPathIterator(null);
+        StringBuilder d = new StringBuilder();
+        double[] c = new double[6];
+        while (!pi.isDone()) {
+            int type = pi.currentSegment(c);
+            switch (type) {
+                case java.awt.geom.PathIterator.SEG_MOVETO:
+                    d.append(String.format(Locale.US, "M%.4f,%.4f ", c[0], c[1]));
+                    break;
+                case java.awt.geom.PathIterator.SEG_LINETO:
+                    d.append(String.format(Locale.US, "L%.4f,%.4f ", c[0], c[1]));
+                    break;
+                case java.awt.geom.PathIterator.SEG_QUADTO:
+                    d.append(String.format(Locale.US, "Q%.4f,%.4f %.4f,%.4f ", c[0], c[1], c[2], c[3]));
+                    break;
+                case java.awt.geom.PathIterator.SEG_CUBICTO:
+                    d.append(String.format(Locale.US, "C%.4f,%.4f %.4f,%.4f %.4f,%.4f ", c[0], c[1], c[2], c[3], c[4], c[5]));
+                    break;
+                case java.awt.geom.PathIterator.SEG_CLOSE:
+                    d.append("Z ");
+                    break;
+            }
+            pi.next();
+        }
+        return d.toString().trim();
     }
 
     // --- Transform Logic ---

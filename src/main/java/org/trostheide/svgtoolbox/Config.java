@@ -18,6 +18,8 @@ public record Config(
         double minHatchArea,
         double simplifyTolerance,
         String hatchPattern,
+        double hatchAngle,
+        double hatchGap,
         double rotationDegrees,
         boolean printStats,
         java.awt.geom.Rectangle2D cropBounds,
@@ -29,7 +31,7 @@ public record Config(
         private float strokeWidth = 0f;
         private List<Color> palette = List.of();
         private boolean enableHatching = false;
-        private HatchStyle globalStyle = new HatchStyle(45.0, 5.0, false);
+        private HatchStyle globalStyle = new HatchStyle(45.0, 5.0, "linear");
         private Map<String, HatchStyle> overrides = Map.of();
         private Map<String, Float> strokeWidthOverrides = Map.of();
         private List<String> hiddenLayers = List.of();
@@ -37,6 +39,8 @@ public record Config(
         private double minHatchArea = 100.0;
         private double simplifyTolerance = 0.0;
         private String hatchPattern = "linear";
+        private double hatchAngle = 45.0;
+        private double hatchGap = 5.0;
         private double rotationDegrees = 0.0;
         private boolean printStats = false;
         private java.awt.geom.Rectangle2D cropBounds = null;
@@ -68,7 +72,7 @@ public record Config(
         }
 
         public Builder globalStyle(HatchStyle globalStyle) {
-            this.globalStyle = globalStyle != null ? globalStyle : new HatchStyle(45.0, 5.0, false);
+            this.globalStyle = globalStyle != null ? globalStyle : new HatchStyle(45.0, 5.0, "linear");
             return this;
         }
 
@@ -107,6 +111,16 @@ public record Config(
             return this;
         }
 
+        public Builder hatchAngle(double hatchAngle) {
+            this.hatchAngle = hatchAngle;
+            return this;
+        }
+
+        public Builder hatchGap(double hatchGap) {
+            this.hatchGap = hatchGap;
+            return this;
+        }
+
         public Builder rotationDegrees(double rotationDegrees) {
             this.rotationDegrees = rotationDegrees;
             return this;
@@ -131,7 +145,7 @@ public record Config(
             return new Config(
                     inputPath, outputPath, strokeWidth, palette, enableHatching,
                     globalStyle, overrides, strokeWidthOverrides, hiddenLayers, noHatchColors, minHatchArea, simplifyTolerance,
-                    hatchPattern, rotationDegrees, printStats, cropBounds, optimizePaths
+                    hatchPattern, hatchAngle, hatchGap, rotationDegrees, printStats, cropBounds, optimizePaths
             );
         }
     }
