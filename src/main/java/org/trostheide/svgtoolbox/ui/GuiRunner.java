@@ -1,13 +1,15 @@
 package org.trostheide.svgtoolbox.ui;
 
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
+
+import com.formdev.flatlaf.FlatLightLaf;
 
 public class GuiRunner {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                // Initialize modern Material Design FlatLaf look and feel
+                FlatLightLaf.setup();
             } catch (Exception ignored) {
             }
             new MainWindow().setVisible(true);
