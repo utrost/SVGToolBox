@@ -29,6 +29,7 @@ public class ControlPanel extends JPanel {
     private JButton btnProcess;
     private JButton btnSave;
     private JButton btnLoad;
+    private JProgressBar progressBar;
 
     public ControlPanel(MainWindow parent) {
         this.parent = parent;
@@ -62,7 +63,16 @@ public class ControlPanel extends JPanel {
         btnProcess.putClientProperty("JButton.buttonType", "default");
         btnProcess.addActionListener(e -> updatePreview());
         bottomSection.add(btnProcess);
-        bottomSection.add(Box.createVerticalStrut(8));
+        bottomSection.add(Box.createVerticalStrut(4));
+
+        progressBar = new JProgressBar();
+        progressBar.setIndeterminate(true);
+        progressBar.setVisible(false);
+        progressBar.setPreferredSize(new Dimension(0, 4));
+        progressBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 4));
+        progressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
+        bottomSection.add(progressBar);
+        bottomSection.add(Box.createVerticalStrut(4));
 
         JPanel pnlButtons = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         btnLoad = new JButton("Load SVG...");
@@ -80,6 +90,7 @@ public class ControlPanel extends JPanel {
         btnProcess.setEnabled(b);
         btnSave.setEnabled(b);
         btnProcess.setText(b ? "Update Preview" : "Processing...");
+        progressBar.setVisible(!b);
     }
 
     private JPanel createOptionsBar() {
