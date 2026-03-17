@@ -164,12 +164,15 @@ public class ControlPanel extends JPanel {
         if (currentInputFile == null) return;
 
         try {
-            java.util.Set<String> colors = org.trostheide.svgtoolbox.core.SvgAnalyzer.extractLayerColors(currentInputFile);
+            java.util.Map<String, String> layerNames = org.trostheide.svgtoolbox.core.SvgAnalyzer.extractLayerNames(currentInputFile);
             
-            if (colors.isEmpty()) {
+            if (layerNames.isEmpty()) {
                 layerSettingsPanel.add(new JLabel("No colored layers found."));
             } else {
-                for (String colorHex : colors) {
+                for (java.util.Map.Entry<String, String> entry : layerNames.entrySet()) {
+                    String colorHex = entry.getKey();
+                    String layerName = entry.getValue();
+
                     JPanel row = new JPanel();
                     row.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 2));
 
@@ -182,7 +185,10 @@ public class ControlPanel extends JPanel {
                     row.add(colorBox);
 
                     // Name
-                    row.add(new JLabel(colorHex));
+                    JLabel lblName = new JLabel(layerName);
+                    lblName.setToolTipText(colorHex);
+                    lblName.setPreferredSize(new Dimension(120, 20)); // Keep it readable
+                    row.add(lblName);
 
                     // Export Checkbox
                     JCheckBox chkExport = new JCheckBox("Exp", true);

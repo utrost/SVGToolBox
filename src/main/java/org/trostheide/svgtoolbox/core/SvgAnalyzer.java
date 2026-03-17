@@ -8,22 +8,32 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SvgAnalyzer {
 
-    public static Set<String> extractLayerColors(File svgFile) throws Exception {
+    public static Map<String, String> extractLayerNames(File svgFile) throws Exception {
         String parser = XMLResourceDescriptor.getXMLParserClassName();
         SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(parser);
         Document doc = factory.createDocument(svgFile.toURI().toString());
 
-        Set<String> colors = new HashSet<>();
-        collectColors(doc.getDocumentElement(), colors);
-        return colors;
+        Map<String, String> layerNames = new HashMap<>();
+        collectLayerNames(doc.getDocumentElement(), layerNames, "Unknown Layer");
+        return layerNames;
     }
 
-    private static void collectColors(Element parent, Set<String> colors) {
+    private static void collectLayerNames(Element parent, Map<String, String> layerNames, String currentLayerName) {
+        // If this element is a layer/group, update the name we will associate with colors found inside
+        String newLayerName = currentLayerName;
+        if ("g".equals(parent.getTagName()) || "layer".equals(parent.getAttributeNS("http://www.inkscape.org/namespaces/inkscape", "groupmode"))) {
+            if (parent.hasAttributeNS("http://www.inkscape.org/namespaces/inkscape", "label")) {
+                newLayerName = parent.getAttributeNS("http://www.inkscape.org/namespaces/inkscape", "label");
+            } else if (parent.hasAttribute("id") && parent.getAttribute("id").toLowerCase().contains("layer")) {
+                newLayerName = parent.getAttribute("id");
+            }
+        }
+
         NodeList children = parent.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             Node node = children.item(i);
@@ -32,10 +42,14 @@ public class SvgAnalyzer {
                 
                 String color = getStrokeColor(el);
                 if (color != null && !color.equals("none") && !color.equals("unknown")) {
-                    colors.add(color.toLowerCase());
+                    String hexColor = color.toLowerCase();
+                    // Keep the first layer name we associate with this color, or update if we was "Unknown Layer" maybe?
+                    // Actually, if multiple things use the same color in different layers, 
+                    // this will overwrite or keep first. Let's just putIfAbsent.
+                    layerNames.putIfAbsent(hexColor, newLayerName);
                 }
                 
-                collectColors(el, colors);
+                collectLayerNames(el, layerNames, newLayerName);
             }
         }
     }
