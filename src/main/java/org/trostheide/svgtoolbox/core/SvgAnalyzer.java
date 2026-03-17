@@ -29,7 +29,7 @@ public class SvgAnalyzer {
         if ("g".equals(parent.getTagName()) || "layer".equals(parent.getAttributeNS("http://www.inkscape.org/namespaces/inkscape", "groupmode"))) {
             if (parent.hasAttributeNS("http://www.inkscape.org/namespaces/inkscape", "label")) {
                 newLayerName = parent.getAttributeNS("http://www.inkscape.org/namespaces/inkscape", "label");
-            } else if (parent.hasAttribute("id") && parent.getAttribute("id").toLowerCase().contains("layer")) {
+            } else if (parent.hasAttribute("id") && !parent.getAttribute("id").isEmpty()) {
                 newLayerName = parent.getAttribute("id");
             }
         }
