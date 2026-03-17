@@ -20,8 +20,11 @@ Prove that the main GUI thread (EDT) is not blocked during intensive SVG process
 5. **Observation 1:** The button text must immediately change from "Update Preview" to "Processing..." and become visually disabled.
 6. **Observation 2:** While the text says "Processing...", quickly attempt to check/uncheck the "Enable Hatching" box. The UI must remain responsive. You should not see a macOS spinning beachball.
 8. **Observation 3:** Wait for processing to complete. Once finished, the button should re-enable and say "Update Preview" again. The main graphic panel must show the processed SVG.
-9. Under **Layer Overrides**, uncheck the "Exp" checkbox for one of the colors and click "Update Preview". Verify the layer disappears.
-10. Adjust the **Stroke Width** slider for a specific layer to 50 (5px) and change its pattern to "cross". Click "Update Preview". Verify the layer is thicker and cross-hatched, while other layers remain unaffected.
+9. Under **Layer Settings**, verify the table has column headers (Layer, Vis, Pattern, Angle, Gap, Width) and alternating row backgrounds.
+10. Uncheck the visibility checkbox for one of the layers and click "Update Preview". Verify the layer disappears.
+11. Use the stroke width **spinner** (+/- buttons) for a specific layer to set it to 5.0px and change its pattern to "cross". Click "Update Preview". Verify the layer is thicker and cross-hatched, while other layers remain unaffected.
+12. Verify that each layer can have a **different** hatch pattern, angle, and gap. Set one layer to "zigzag" at 90 degrees and another to "linear" at 45 degrees. Click "Update Preview" and confirm they render differently.
+13. Verify there is **no global settings panel** — only per-layer controls and the "Options" bar (Enable Hatching, Optimize Path Travel).
 11. Click **"Save As..."**, pick a destination file (e.g. `test_output.svg`), and verify the exact same asynchronous behavior happens (button disables, UI remains responsive) until you get the "Saved to..." success dialog. Verify the saved file matches what is shown in the preview pane.
 
 ---

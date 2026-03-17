@@ -7,6 +7,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **GUI Overhaul:** Replaced global settings panel with per-layer controls as the sole configuration. Each layer now has independent pattern, angle, gap, and stroke width settings. Stroke width uses precise JSpinner controls with +/- buttons instead of sliders.
+- **GUI Polish:** GridBagLayout for aligned layer rows, column headers, zebra striping, larger color swatches with borders, bold layer names, FlatLaf theming with rounded corners and smooth scrolling.
+- **Config.Builder Tests:** New `ConfigBuilderTest` with tests for defaults, per-layer overrides, and null safety.
 - GitHub Actions CI pipeline (Maven build + test on Java 17/21)
 - CONTRIBUTING.md
 - This CHANGELOG

@@ -62,7 +62,7 @@ svgtoolbox -i input.svg -o output.svg [options]
 .\start_gui.bat       # Windows
 ```
 
-Requires a display environment (X11/Wayland). Uses Java Swing with live preview. The GUI provides a powerful "Layer Overrides" panel to configure hatching, stroke width, and export visibility dynamically per-layer. The heavy generative processing runs asynchronously, ensuring the application remains responsive during optimization.
+Requires a display environment (X11/Wayland). Uses Java Swing with FlatLaf Material Design theming and live preview. Each layer has its own independent controls for hatch pattern, angle, gap, stroke width, and export visibility — no global settings needed. Stroke width uses precise spinner controls with +/- buttons. The heavy generative processing runs asynchronously, ensuring the application remains responsive during optimization.
 
 ### Core Options
 
