@@ -141,8 +141,10 @@ public class ControlPanel extends JPanel {
 
     private JPanel layerSettingsPanel;
     
-    // UI elements per layer: ColorHex -> LayerWidgets
-    private java.util.Map<String, LayerWidgets> layerWidgets = new java.util.HashMap<>();
+    // UI elements per layer: layerId -> LayerWidgets
+    private java.util.Map<String, LayerWidgets> layerWidgets = new java.util.LinkedHashMap<>();
+    // Map layerId -> LayerInfo for resolving colors in buildConfigFromGui
+    private java.util.Map<String, org.trostheide.svgtoolbox.core.SvgAnalyzer.LayerInfo> layerInfoMap = new java.util.LinkedHashMap<>();
     
     private static class LayerWidgets {
         JCheckBox chkExport;
@@ -160,6 +162,7 @@ public class ControlPanel extends JPanel {
     private void refreshLayerSettings() {
         layerSettingsPanel.removeAll();
         layerWidgets.clear();
+        layerInfoMap.clear();
 
         if (currentInputFile == null) return;
 
@@ -214,12 +217,13 @@ public class ControlPanel extends JPanel {
                     row.add(sldWidth);
                     row.add(lblVal);
 
-                    // Store widgets keyed by layer id
+                    // Store widgets and layer info keyed by layer id
                     LayerWidgets widgets = new LayerWidgets();
                     widgets.chkExport = chkExport;
                     widgets.cmbPattern = cmbPat;
                     widgets.sldStrokeWidth = sldWidth;
                     layerWidgets.put(layer.id, widgets);
+                    layerInfoMap.put(layer.id, layer);
 
                     layerSettingsPanel.add(row);
                 }
@@ -249,32 +253,33 @@ public class ControlPanel extends JPanel {
         java.util.List<Color> noHatchColors = new java.util.ArrayList<>();
 
         for (java.util.Map.Entry<String, LayerWidgets> entry : layerWidgets.entrySet()) {
-            String hex = entry.getKey();
+            String layerId = entry.getKey();
             LayerWidgets lw = entry.getValue();
 
+            // Resolve layer id back to color(s) for downstream processors
+            org.trostheide.svgtoolbox.core.SvgAnalyzer.LayerInfo info = layerInfoMap.get(layerId);
+            java.util.Set<String> layerColors = (info != null) ? info.colors : java.util.Collections.singleton(layerId);
+
             if (!lw.chkExport.isSelected()) {
-                hiddenLayers.add(hex);
-                continue; // no need to build the rest for hidden
+                for (String c : layerColors) { hiddenLayers.add(c); }
+                continue;
             }
 
             float width = lw.sldStrokeWidth.getValue() / 10f;
             if (width > 0) {
-                strokeWidthOverrides.put(hex, width);
+                for (String c : layerColors) { strokeWidthOverrides.put(c, width); }
             }
 
             String pat = (String) lw.cmbPattern.getSelectedItem();
             if ("none".equals(pat)) {
-                try {
-                    noHatchColors.add(Color.decode(hex));
-                } catch(Exception ignored) {}
+                for (String c : layerColors) {
+                    try { noHatchColors.add(Color.decode(c)); } catch(Exception ignored) {}
+                }
             } else if (!"Global".equals(pat)) {
-                // To properly support overriding the hatch *type*, we must pass it to Config.
-                // Currently Config only has a global hatchPattern string and HatchStyle(angle, gap, cross) overrides.
-                // For now, if "cross", we can intercept it, else we might not fully hook up the zigzag/wave per color.
-                // Wait, Config doesn't support per-color Hatch Pattern string yet, only crossHatch boolean.
-                // Let's assume global overrides crossHatch. If they selected cross, we set cross to true.
                 boolean isCross = "cross".equals(pat);
-                styleOverrides.put(hex, new org.trostheide.svgtoolbox.HatchStyle(45.0, 5.0, isCross));
+                for (String c : layerColors) {
+                    styleOverrides.put(c, new org.trostheide.svgtoolbox.HatchStyle(45.0, 5.0, isCross));
+                }
             }
         }
 
