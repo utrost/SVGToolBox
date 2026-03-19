@@ -6,6 +6,8 @@ SVGToolBox takes SVG files designed for screens — with solid fills and infinit
 
 Built for pen plotters like the AxiDraw, iDraw, and similar HPGL/G-Code devices.
 
+![SVGToolBox GUI — Layer settings with hatching preview on a CityPlot map](docs/screenshot-gui.jpg)
+
 ## Pipeline Architecture
 
 ```
