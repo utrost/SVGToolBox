@@ -4,7 +4,7 @@ All notable changes to SVGToolBox will be documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.0.0] — 2026-03-20
 
 ### Added
 - **GUI Overhaul:** Replaced global settings panel with per-layer controls as the sole configuration. Each layer now has independent pattern, angle, gap, and stroke width settings. Stroke width uses precise JSpinner controls with +/- buttons instead of sliders.
