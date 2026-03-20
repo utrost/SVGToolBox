@@ -114,6 +114,14 @@ svgtoolbox \
   --simplify 1.0 --min-area 100
 ```
 
+## Before / After
+
+| Input | Processed |
+|-------|-----------|
+| ![Input SVG](docs/example-input.png) | ![Processed SVG](docs/example-output.png) |
+
+*Left: Raw SVG input. Right: After SVGToolBox processing (palette reduction, stroke normalization, path optimization).*
+
 ## Examples
 
 **Quick single-color plot:**
