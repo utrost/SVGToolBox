@@ -148,17 +148,12 @@ public class SvgToolboxRunner {
         double w = 0, h = 0;
         switch (arg.toUpperCase()) {
             case "A4":
-                w = 595.28;
-                h = 841.89;
-                break; // 72 DPI? Or 96? A4 is 210x297mm.
-                       // 210mm * 3.7795 px/mm (96dpi) = 793.7.
-                       // Standard SVG usually 96dpi.
-                       // Let's use 96 DPI: 793.7 x 1122.5
-                       // Let's stick to generic units or pixels.
-                       // Inkscape uses 96 dpi.
+                w = 793.7;  // 210mm at 96 DPI (SVG/Inkscape standard)
+                h = 1122.5; // 297mm at 96 DPI
+                break;
             case "LETTER":
-                w = 816.0;
-                h = 1056.0;
+                w = 816.0;  // 8.5in at 96 DPI
+                h = 1056.0; // 11in at 96 DPI
                 break;
             default:
                 try {
@@ -181,7 +176,16 @@ public class SvgToolboxRunner {
                 .collect(Collectors.toList());
     }
 
+    @FunctionalInterface
+    public interface ProgressCallback {
+        void onProgress(int step, int total, String processorName);
+    }
+
     public static void processPipeline(Config config) throws IOException {
+        processPipeline(config, null);
+    }
+
+    public static void processPipeline(Config config, ProgressCallback progress) throws IOException {
         String parser = XMLResourceDescriptor.getXMLParserClassName();
         SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(parser);
         Document doc = factory.createDocument(new File(config.inputPath()).toURI().toString());
@@ -209,7 +213,13 @@ public class SvgToolboxRunner {
             pipeline.add(new PathOptimizeProcessor());
         }
 
+        int total = pipeline.size();
+        int step = 0;
         for (Processor p : pipeline) {
+            step++;
+            if (progress != null) {
+                progress.onProgress(step, total, p.getClass().getSimpleName().replace("Processor", ""));
+            }
             p.process(doc, config);
         }
 
