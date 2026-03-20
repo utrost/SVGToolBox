@@ -11,19 +11,23 @@ Built for pen plotters like the AxiDraw, iDraw, and similar HPGL/G-Code devices.
 ## Pipeline Architecture
 
 ```
-Input SVG → StrokeWidth → Palette → Simplify → Hatch → PathOptimize → Layer → Output SVG
+Input SVG → Visibility → StyleNormalizer → Rotate → StrokeWidth → Palette → Simplify → Hatch → Layer → Crop → PathOptimize → Output SVG
 ```
 
 Each stage is a `Processor` that modifies the SVG DOM in-place. The pipeline is linear, stateless, and extensible.
 
 | Processor | Purpose |
 |---|---|
+| **VisibilityProcessor** | Remove elements by hidden color list |
+| **StyleNormalizerProcessor** | Convert `style=""` attributes to individual SVG attributes |
+| **RotateProcessor** | Canvas rotation (90°/180°/270°) with dimension swapping |
 | **StrokeWidthProcessor** | Normalize line weights to physical pen tip size |
 | **PaletteProcessor** | Quantize colors to available pens (Euclidean distance) |
 | **SimplifyProcessor** | Reduce path complexity (Ramer-Douglas-Peucker) |
 | **HatchProcessor** | Convert fills to line patterns (scanline, world-space baking) |
-| **PathOptimizeProcessor** | Reorder paths to minimize pen travel using Apache Batik for precise coordinate parsing and greedy nearest neighbor sorting |
 | **LayerProcessor** | Flatten groups into Inkscape layers, auto-fit viewBox |
+| **CropProcessor** | Remove shapes outside crop bounds (A4, Letter, or custom WxH) |
+| **PathOptimizeProcessor** | Reorder paths to minimize pen travel using Apache Batik for precise coordinate parsing and greedy nearest neighbor sorting |
 
 ## Prerequisites
 
@@ -139,6 +143,7 @@ src/main/java/org/trostheide/svgtoolbox/
 ├── Processor.java             # Processor interface
 ├── core/
 │   ├── ShapeParser.java       # Geometry extraction
+│   ├── SvgAnalyzer.java       # SVG layer detection for UI integration
 │   └── SvgStatistics.java     # Layer statistics
 ├── processors/                # Pipeline stages
 │   ├── VisibilityProcessor
