@@ -11,19 +11,23 @@ Built for pen plotters like the AxiDraw, iDraw, and similar HPGL/G-Code devices.
 ## Pipeline Architecture
 
 ```
-Input SVG → StrokeWidth → Palette → Simplify → Hatch → PathOptimize → Layer → Output SVG
+Input SVG → Visibility → StyleNormalizer → Rotate → StrokeWidth → Palette → Simplify → Hatch → Layer → Crop → PathOptimize → Output SVG
 ```
 
 Each stage is a `Processor` that modifies the SVG DOM in-place. The pipeline is linear, stateless, and extensible.
 
 | Processor | Purpose |
 |---|---|
-| **StrokeWidthProcessor** | Normalize line weights to physical pen tip size |
-| **PaletteProcessor** | Quantize colors to available pens (Euclidean distance) |
+| **VisibilityProcessor** | Hide/show layers based on export visibility settings |
+| **StyleNormalizerProcessor** | Convert CSS classes to inline attributes for reliable downstream processing |
+| **RotateProcessor** | Rotate canvas 90°/180°/270° |
+| **StrokeWidthProcessor** | Normalize line weights to physical pen tip size (global or per-layer) |
+| **PaletteProcessor** | Quantize colors to available pens (perceptual color matching) |
 | **SimplifyProcessor** | Reduce path complexity (Ramer-Douglas-Peucker) |
 | **HatchProcessor** | Convert fills to line patterns (scanline, world-space baking) |
-| **PathOptimizeProcessor** | Reorder paths to minimize pen travel using Apache Batik for precise coordinate parsing and greedy nearest neighbor sorting |
 | **LayerProcessor** | Flatten groups into Inkscape layers, auto-fit viewBox |
+| **CropProcessor** | Crop to A4, Letter, or custom dimensions |
+| **PathOptimizeProcessor** | Reorder paths to minimize pen travel using Apache Batik for precise coordinate parsing and greedy nearest neighbor sorting |
 
 ## Prerequisites
 
@@ -75,6 +79,7 @@ Requires a display environment (X11/Wayland). Uses Java Swing with FlatLaf Mater
 | `-p, --palette` | Pen colors, comma-separated hex | — |
 | `-w, --stroke-width` | Stroke width in px | 1.0 |
 | `-h, --hatch` | Enable hatching engine | off |
+| `--pattern` | Global hatch pattern (none, empty, linear, cross, zigzag, wave, dot) | linear |
 | `--optimize` | Optimize path order | off |
 | `--rotate` | Rotate 90/180/270° | — |
 | `--crop` | Crop to A4, Letter, or WxH | — |
@@ -139,6 +144,7 @@ src/main/java/org/trostheide/svgtoolbox/
 ├── Processor.java             # Processor interface
 ├── core/
 │   ├── ShapeParser.java       # Geometry extraction
+│   ├── SvgAnalyzer.java       # Layer detection and SVG structure analysis
 │   └── SvgStatistics.java     # Layer statistics
 ├── processors/                # Pipeline stages
 │   ├── VisibilityProcessor
