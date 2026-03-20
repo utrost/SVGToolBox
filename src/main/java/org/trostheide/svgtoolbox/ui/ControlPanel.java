@@ -499,7 +499,7 @@ public class ControlPanel extends JPanel {
                 protected Void doInBackground() throws Exception {
                     SvgToolboxRunner.processPipeline(config, (step, total, name) -> {
                         int pct = (int) ((step * 100.0) / total);
-                        setProgress(pct, String.format("Step %d/%d: %s", step, total, name));
+                        ControlPanel.this.setProgress(pct, String.format("Step %d/%d: %s", step, total, name));
                     });
                     return null;
                 }
