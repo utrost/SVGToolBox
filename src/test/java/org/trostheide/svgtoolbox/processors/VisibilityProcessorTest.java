@@ -50,4 +50,87 @@ class VisibilityProcessorTest {
         assertEquals(1, root.getElementsByTagName("rect").getLength(), "Only the green rect should remain");
         assertEquals("#00ff00", ((Element) root.getElementsByTagName("rect").item(0)).getAttribute("stroke"));
     }
+
+    @Test
+    void testNoChangeWhenHiddenLayersEmpty() throws Exception {
+        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element root = doc.createElement("svg");
+        doc.appendChild(root);
+
+        Element rect = doc.createElement("rect");
+        rect.setAttribute("stroke", "#ff0000");
+        root.appendChild(rect);
+
+        Config config = new Config(
+                "in", "out", 1.0f, Collections.emptyList(), false,
+                HatchStyle.of(45, 5), Collections.emptyMap(), Collections.emptyMap(),
+                Collections.emptyList(), // empty hidden layers
+                Collections.emptyList(), 0.0,
+                1.0, "linear", 45.0, 5.0, 0.0, false, null, false
+        );
+
+        VisibilityProcessor processor = new VisibilityProcessor();
+        processor.process(doc, config);
+
+        assertEquals(1, root.getElementsByTagName("rect").getLength(), "Rect should remain when no hidden layers");
+    }
+
+    @Test
+    void testHiddenLayersByFillColor() throws Exception {
+        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element root = doc.createElement("svg");
+        doc.appendChild(root);
+
+        Element rect = doc.createElement("rect");
+        rect.setAttribute("fill", "#ff0000"); // fill only, no stroke
+        root.appendChild(rect);
+
+        Config config = new Config(
+                "in", "out", 1.0f, Collections.emptyList(), false,
+                HatchStyle.of(45, 5), Collections.emptyMap(), Collections.emptyMap(),
+                List.of("#ff0000"), // hide red
+                Collections.emptyList(), 0.0,
+                1.0, "linear", 45.0, 5.0, 0.0, false, null, false
+        );
+
+        VisibilityProcessor processor = new VisibilityProcessor();
+        processor.process(doc, config);
+
+        assertEquals(0, root.getElementsByTagName("rect").getLength(),
+                "Rect with matching fill color should be removed");
+    }
+
+    @Test
+    void testRecursivelyRemovesNestedShapes() throws Exception {
+        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element root = doc.createElement("svg");
+        doc.appendChild(root);
+
+        Element group = doc.createElement("g");
+        group.setAttribute("stroke", "#ff0000");
+        root.appendChild(group);
+
+        Element rect1 = doc.createElement("rect");
+        group.appendChild(rect1);
+
+        Element rect2 = doc.createElement("rect");
+        group.appendChild(rect2);
+
+        Config config = new Config(
+                "in", "out", 1.0f, Collections.emptyList(), false,
+                HatchStyle.of(45, 5), Collections.emptyMap(), Collections.emptyMap(),
+                List.of("#ff0000"),
+                Collections.emptyList(), 0.0,
+                1.0, "linear", 45.0, 5.0, 0.0, false, null, false
+        );
+
+        VisibilityProcessor processor = new VisibilityProcessor();
+        processor.process(doc, config);
+
+        // The group with matching color should be removed (along with its children)
+        assertEquals(0, root.getElementsByTagName("g").getLength(),
+                "Group with matching color should be removed");
+        assertEquals(0, root.getElementsByTagName("rect").getLength(),
+                "Children of removed group should also be gone");
+    }
 }
