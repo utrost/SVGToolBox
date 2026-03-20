@@ -16,7 +16,7 @@ import java.io.File;
 public class ControlPanel extends JPanel {
 
     private static final float DEFAULT_STROKE_WIDTH = 1.0f;
-    private static final String DEFAULT_PATTERN = "linear";
+    private static final String DEFAULT_PATTERN = "none";
     private static final double DEFAULT_ANGLE = 45.0;
     private static final double DEFAULT_GAP = 5.0;
     private static final int DEBOUNCE_DELAY_MS = 600;
