@@ -16,7 +16,20 @@ public class MainWindow extends JFrame {
 
         setLayout(new BorderLayout());
 
-        // Placeholder for now, to be implemented next
+        // Menu bar
+        JMenuBar menuBar = new JMenuBar();
+        JMenu viewMenu = new JMenu("View");
+        JCheckBoxMenuItem darkModeItem = new JCheckBoxMenuItem("Dark Mode");
+        darkModeItem.setAccelerator(KeyStroke.getKeyStroke("control D"));
+        darkModeItem.setSelected(GuiRunner.isDarkMode());
+        darkModeItem.addActionListener(e -> {
+            GuiRunner.toggleDarkMode();
+            darkModeItem.setSelected(GuiRunner.isDarkMode());
+        });
+        viewMenu.add(darkModeItem);
+        menuBar.add(viewMenu);
+        setJMenuBar(menuBar);
+
         previewPanel = new PreviewPanel();
         controlPanel = new ControlPanel(this);
 

@@ -12,9 +12,19 @@ import java.io.File;
 public class PreviewPanel extends JPanel {
     private JSVGCanvas svgCanvas;
     private Point lastMousePos;
+    private JLabel hintLabel;
+    private boolean fileLoaded = false;
 
     public PreviewPanel() {
         setLayout(new BorderLayout());
+
+        // Drop hint overlay
+        hintLabel = new JLabel("<html><center>Drag & drop an SVG file here<br>or click <b>Load SVG</b></center></html>");
+        hintLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        hintLabel.setVerticalAlignment(SwingConstants.CENTER);
+        hintLabel.setForeground(UIManager.getColor("Label.disabledForeground"));
+        hintLabel.setFont(hintLabel.getFont().deriveFont(Font.PLAIN, 16f));
+
         svgCanvas = new JSVGCanvas();
         // Disable default interactors to avoid conflict
         svgCanvas.setDocumentState(JSVGCanvas.ALWAYS_DYNAMIC);
@@ -26,7 +36,7 @@ public class PreviewPanel extends JPanel {
         // Custom Interactors
         setupInteractions();
 
-        add(svgCanvas, BorderLayout.CENTER);
+        add(hintLabel, BorderLayout.CENTER);
 
         setTransferHandler(new TransferHandler() {
             @Override
@@ -117,6 +127,13 @@ public class PreviewPanel extends JPanel {
 
     public void loadFile(File file) {
         if (file.exists()) {
+            if (!fileLoaded) {
+                remove(hintLabel);
+                add(svgCanvas, BorderLayout.CENTER);
+                revalidate();
+                repaint();
+                fileLoaded = true;
+            }
             svgCanvas.setURI(file.toURI().toString());
         }
     }

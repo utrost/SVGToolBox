@@ -2,11 +2,15 @@ package org.trostheide.svgtoolbox.ui;
 
 import org.trostheide.svgtoolbox.Config;
 import org.trostheide.svgtoolbox.SvgToolboxRunner;
+import org.trostheide.svgtoolbox.core.SvgStatistics;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemListener;
 import java.io.File;
 
 public class ControlPanel extends JPanel {
@@ -15,6 +19,7 @@ public class ControlPanel extends JPanel {
     private static final String DEFAULT_PATTERN = "linear";
     private static final double DEFAULT_ANGLE = 45.0;
     private static final double DEFAULT_GAP = 5.0;
+    private static final int DEBOUNCE_DELAY_MS = 600;
 
     private static final String[] PATTERN_OPTIONS = {
             "none", "empty", "linear", "cross", "zigzag", "wave", "dot"
@@ -30,12 +35,21 @@ public class ControlPanel extends JPanel {
     private JButton btnSave;
     private JButton btnLoad;
     private JProgressBar progressBar;
+    private JLabel lblStats;
+    private JSpinner spinSimplify;
+
+    // Debounce timer for auto-preview
+    private Timer debounceTimer;
 
     public ControlPanel(MainWindow parent) {
         this.parent = parent;
         setLayout(new BorderLayout(0, 0));
         setBorder(new EmptyBorder(8, 8, 8, 8));
         setPreferredSize(new Dimension(560, 0));
+
+        // Initialize debounce timer (single-shot, fires updatePreview)
+        debounceTimer = new Timer(DEBOUNCE_DELAY_MS, e -> updatePreview());
+        debounceTimer.setRepeats(false);
 
         JPanel topSection = new JPanel();
         topSection.setLayout(new BoxLayout(topSection, BoxLayout.Y_AXIS));
@@ -53,7 +67,7 @@ public class ControlPanel extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(16);
         add(scroll, BorderLayout.CENTER);
 
-        // Bottom buttons
+        // Bottom section
         JPanel bottomSection = new JPanel();
         bottomSection.setLayout(new BoxLayout(bottomSection, BoxLayout.Y_AXIS));
         bottomSection.setBorder(new EmptyBorder(4, 0, 0, 0));
@@ -65,13 +79,22 @@ public class ControlPanel extends JPanel {
         bottomSection.add(btnProcess);
         bottomSection.add(Box.createVerticalStrut(4));
 
-        progressBar = new JProgressBar();
-        progressBar.setIndeterminate(true);
+        progressBar = new JProgressBar(0, 100);
+        progressBar.setStringPainted(true);
         progressBar.setVisible(false);
-        progressBar.setPreferredSize(new Dimension(0, 4));
-        progressBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 4));
+        progressBar.setPreferredSize(new Dimension(0, 16));
+        progressBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 16));
         progressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
         bottomSection.add(progressBar);
+        bottomSection.add(Box.createVerticalStrut(4));
+
+        // Statistics label
+        lblStats = new JLabel(" ");
+        lblStats.setFont(lblStats.getFont().deriveFont(Font.PLAIN, 10f));
+        lblStats.setForeground(UIManager.getColor("Label.disabledForeground"));
+        lblStats.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblStats.setHorizontalAlignment(SwingConstants.CENTER);
+        bottomSection.add(lblStats);
         bottomSection.add(Box.createVerticalStrut(4));
 
         JPanel pnlButtons = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
@@ -84,6 +107,39 @@ public class ControlPanel extends JPanel {
         bottomSection.add(pnlButtons);
 
         add(bottomSection, BorderLayout.SOUTH);
+
+        setupKeyboardShortcuts();
+    }
+
+    /** Schedule a debounced preview update. */
+    private void schedulePreviewUpdate() {
+        debounceTimer.restart();
+    }
+
+    private void setupKeyboardShortcuts() {
+        // Ctrl+O: Load SVG
+        getInputMap(WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke("control O"), "loadSvg");
+        getActionMap().put("loadSvg", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) { loadSvg(); }
+        });
+
+        // Ctrl+S: Save As
+        getInputMap(WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke("control S"), "saveSvg");
+        getActionMap().put("saveSvg", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) { saveOutput(); }
+        });
+
+        // Ctrl+Enter: Update Preview
+        getInputMap(WHEN_IN_FOCUSED_WINDOW).put(
+                KeyStroke.getKeyStroke("control ENTER"), "updatePreview");
+        getActionMap().put("updatePreview", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) { updatePreview(); }
+        });
     }
 
     private void setControlsEnabled(boolean b) {
@@ -93,12 +149,22 @@ public class ControlPanel extends JPanel {
         progressBar.setVisible(!b);
     }
 
+    private void setProgress(int percent, String label) {
+        SwingUtilities.invokeLater(() -> {
+            progressBar.setIndeterminate(false);
+            progressBar.setValue(percent);
+            progressBar.setString(label);
+        });
+    }
+
     private JPanel createOptionsBar() {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 4));
         p.setBorder(new TitledBorder("Options"));
         chkEnableHatching = new JCheckBox("Enable Hatching", true);
+        chkEnableHatching.addItemListener(e -> schedulePreviewUpdate());
         p.add(chkEnableHatching);
         chkOptimize = new JCheckBox("Optimize Path Travel", false);
+        chkOptimize.addItemListener(e -> schedulePreviewUpdate());
         p.add(chkOptimize);
         return p;
     }
@@ -122,7 +188,16 @@ public class ControlPanel extends JPanel {
         p.add(Box.createHorizontalStrut(10));
         p.add(new JLabel("Crop:"));
         cmbCrop = new JComboBox<>(new String[] { "None", "Current View", "A4", "Letter", "500x500" });
+        cmbCrop.addActionListener(e -> schedulePreviewUpdate());
         p.add(cmbCrop);
+
+        p.add(Box.createHorizontalStrut(10));
+        p.add(new JLabel("Simplify:"));
+        spinSimplify = new JSpinner(new SpinnerNumberModel(0.0, 0.0, 10.0, 0.1));
+        spinSimplify.setPreferredSize(new Dimension(60, 24));
+        spinSimplify.setToolTipText("Path simplification tolerance (0 = off)");
+        spinSimplify.addChangeListener(e -> schedulePreviewUpdate());
+        p.add(spinSimplify);
 
         return p;
     }
@@ -291,6 +366,7 @@ public class ControlPanel extends JPanel {
         JCheckBox chkExport = new JCheckBox();
         chkExport.setSelected(true);
         chkExport.setToolTipText("Include this layer in output");
+        chkExport.addItemListener(e -> schedulePreviewUpdate());
         row.add(chkExport, gbc);
 
         // Pattern
@@ -298,6 +374,7 @@ public class ControlPanel extends JPanel {
         JComboBox<String> cmbPat = new JComboBox<>(PATTERN_OPTIONS);
         cmbPat.setSelectedItem(DEFAULT_PATTERN);
         cmbPat.setPreferredSize(new Dimension(82, 24));
+        cmbPat.addActionListener(e -> schedulePreviewUpdate());
         row.add(cmbPat, gbc);
 
         // Angle
@@ -305,6 +382,7 @@ public class ControlPanel extends JPanel {
         JSpinner spinAngle = new JSpinner(new SpinnerNumberModel(DEFAULT_ANGLE, 0.0, 360.0, 5.0));
         spinAngle.setPreferredSize(new Dimension(62, 24));
         spinAngle.setToolTipText("Hatch angle (\u00B0)");
+        spinAngle.addChangeListener(e -> schedulePreviewUpdate());
         row.add(spinAngle, gbc);
 
         // Gap
@@ -312,6 +390,7 @@ public class ControlPanel extends JPanel {
         JSpinner spinGap = new JSpinner(new SpinnerNumberModel(DEFAULT_GAP, 0.1, 50.0, 0.5));
         spinGap.setPreferredSize(new Dimension(60, 24));
         spinGap.setToolTipText("Hatch gap (px)");
+        spinGap.addChangeListener(e -> schedulePreviewUpdate());
         row.add(spinGap, gbc);
 
         // Stroke Width
@@ -320,6 +399,7 @@ public class ControlPanel extends JPanel {
                 (double) DEFAULT_STROKE_WIDTH, 0.1, 5.0, 0.1));
         spinWidth.setPreferredSize(new Dimension(60, 24));
         spinWidth.setToolTipText("Stroke width (px)");
+        spinWidth.addChangeListener(e -> schedulePreviewUpdate());
         row.add(spinWidth, gbc);
 
         // Store widgets
@@ -344,6 +424,8 @@ public class ControlPanel extends JPanel {
         } else if (!"None".equals(cropVal)) {
             cropRect = SvgToolboxRunner.parseCrop(cropVal);
         }
+
+        double simplifyTol = ((Number) spinSimplify.getValue()).doubleValue();
 
         java.util.Map<String, org.trostheide.svgtoolbox.HatchStyle> styleOverrides = new java.util.HashMap<>();
         java.util.Map<String, Float> strokeWidthOverrides = new java.util.HashMap<>();
@@ -395,6 +477,7 @@ public class ControlPanel extends JPanel {
                 .strokeWidthOverrides(strokeWidthOverrides)
                 .overrides(styleOverrides)
                 .noHatchColors(noHatchColors)
+                .simplifyTolerance(simplifyTol)
                 .globalStyle(new org.trostheide.svgtoolbox.HatchStyle(DEFAULT_ANGLE, DEFAULT_GAP, DEFAULT_PATTERN))
                 .build();
     }
@@ -405,14 +488,19 @@ public class ControlPanel extends JPanel {
 
         try {
             final File tempOut = File.createTempFile("preview_", ".svg");
+            tempOut.deleteOnExit();
             final Config config = buildConfigFromGui(tempOut);
 
             setControlsEnabled(false);
+            setProgress(0, "Starting...");
 
             SwingWorker<Void, Void> worker = new SwingWorker<>() {
                 @Override
                 protected Void doInBackground() throws Exception {
-                    SvgToolboxRunner.processPipeline(config);
+                    SvgToolboxRunner.processPipeline(config, (step, total, name) -> {
+                        int pct = (int) ((step * 100.0) / total);
+                        setProgress(pct, String.format("Step %d/%d: %s", step, total, name));
+                    });
                     return null;
                 }
 
@@ -422,10 +510,12 @@ public class ControlPanel extends JPanel {
                     try {
                         get();
                         parent.getPreviewPanel().loadFile(tempOut);
+                        updateStats(tempOut);
                     } catch (Exception ex) {
                         ex.printStackTrace();
+                        String msg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
                         JOptionPane.showMessageDialog(ControlPanel.this,
-                                "Error processing SVG: " + ex.getCause().getMessage(),
+                                "Error processing SVG: " + msg,
                                 "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 }
@@ -435,6 +525,21 @@ public class ControlPanel extends JPanel {
         } catch (Exception e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error setup: " + e.getMessage());
+        }
+    }
+
+    private void updateStats(File outputFile) {
+        try {
+            String parser = org.apache.batik.util.XMLResourceDescriptor.getXMLParserClassName();
+            org.apache.batik.anim.dom.SAXSVGDocumentFactory factory =
+                    new org.apache.batik.anim.dom.SAXSVGDocumentFactory(parser);
+            org.w3c.dom.Document doc = factory.createDocument(outputFile.toURI().toString());
+            SvgStatistics.Stats stats = SvgStatistics.analyze(doc);
+            lblStats.setText(String.format("%d elements | %.2f m total path length | ~%.0f min @ 50mm/s",
+                    stats.elementCount(), stats.totalLengthMeters(),
+                    (stats.totalLengthMeters() / 0.05) / 60.0));
+        } catch (Exception e) {
+            lblStats.setText(" ");
         }
     }
 

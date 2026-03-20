@@ -33,6 +33,13 @@ public class LinearHatchPattern implements HatchPattern {
         // Current implementation just starts at bounds.MinY + gap.
         // For consistent texturing, it is better to lock to global grid.
         // But let's keep original behavior for regression test first.
+        AffineTransform toWorld;
+        try {
+            toWorld = toAligned.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            return result; // Should not happen for rotation
+        }
+
         for (double y = startY + gap; y < endY; y += gap) {
             List<Double> intersections = new ArrayList<>();
             for (Line2D edge : edges) {
@@ -47,14 +54,9 @@ public class LinearHatchPattern implements HatchPattern {
                 double x2 = intersections.get(i + 1);
                 Point2D p1 = new Point2D.Double(x1, y);
                 Point2D p2 = new Point2D.Double(x2, y);
-                try {
-                    AffineTransform toWorld = toAligned.createInverse();
-                    Point2D w1 = toWorld.transform(p1, null);
-                    Point2D w2 = toWorld.transform(p2, null);
-                    result.add(new Line2D.Double(w1, w2));
-                } catch (NoninvertibleTransformException e) {
-                    // Should not happen for rotation
-                }
+                Point2D w1 = toWorld.transform(p1, null);
+                Point2D w2 = toWorld.transform(p2, null);
+                result.add(new Line2D.Double(w1, w2));
             }
         }
         return result;

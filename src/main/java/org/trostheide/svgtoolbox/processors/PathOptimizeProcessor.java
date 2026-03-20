@@ -75,9 +75,70 @@ public class PathOptimizeProcessor implements Processor {
             currentPos = getEndPoint(next);
         }
 
+        // 2-opt improvement: iteratively uncross path segments
+        sorted = twoOptImprove(sorted);
+
         // Reorder in DOM
         for (Element s : sorted) {
             group.appendChild(s); // Moves it to the end
+        }
+    }
+
+    private List<Element> twoOptImprove(List<Element> route) {
+        if (route.size() < 4) return route;
+
+        boolean improved = true;
+        int maxIterations = 5; // cap iterations for large inputs
+        while (improved && maxIterations-- > 0) {
+            improved = false;
+            for (int i = 0; i < route.size() - 2; i++) {
+                for (int j = i + 2; j < route.size(); j++) {
+                    double currentDist = segmentDistance(route, i, j);
+                    double swappedDist = swappedSegmentDistance(route, i, j);
+                    if (swappedDist < currentDist - 0.001) {
+                        // Reverse the segment between i+1 and j
+                        reverseSubList(route, i + 1, j);
+                        improved = true;
+                    }
+                }
+            }
+        }
+        return route;
+    }
+
+    private double segmentDistance(List<Element> route, int i, int j) {
+        Point2D.Double endI = getEndPoint(route.get(i));
+        Point2D.Double startI1 = getStartPoint(route.get(i + 1));
+        double d1 = endI.distanceSq(startI1);
+
+        if (j + 1 < route.size()) {
+            Point2D.Double endJ = getEndPoint(route.get(j));
+            Point2D.Double startJ1 = getStartPoint(route.get(j + 1));
+            return d1 + endJ.distanceSq(startJ1);
+        }
+        return d1;
+    }
+
+    private double swappedSegmentDistance(List<Element> route, int i, int j) {
+        Point2D.Double endI = getEndPoint(route.get(i));
+        Point2D.Double startJ = getStartPoint(route.get(j)); // after reverse, j becomes i+1's neighbor
+        double d1 = endI.distanceSq(startJ);
+
+        if (j + 1 < route.size()) {
+            Point2D.Double endI1 = getEndPoint(route.get(i + 1)); // after reverse, i+1 becomes j's neighbor
+            Point2D.Double startJ1 = getStartPoint(route.get(j + 1));
+            return d1 + endI1.distanceSq(startJ1);
+        }
+        return d1;
+    }
+
+    private void reverseSubList(List<Element> list, int from, int to) {
+        while (from < to) {
+            Element temp = list.get(from);
+            list.set(from, list.get(to));
+            list.set(to, temp);
+            from++;
+            to--;
         }
     }
 
