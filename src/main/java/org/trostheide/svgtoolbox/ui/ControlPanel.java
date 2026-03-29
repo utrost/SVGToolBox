@@ -27,6 +27,13 @@ public class ControlPanel extends JPanel {
 
     private JCheckBox chkEnableHatching;
     private JCheckBox chkOptimize;
+    private JCheckBox chkLinesimplify;
+    private JCheckBox chkLinemerge;
+    private JCheckBox chkLinesort;
+    private JCheckBox chkLinesortTwoOpt;
+    private JCheckBox chkReloop;
+    private JSpinner spinLinesimplifyTol;
+    private JSpinner spinLinemergeTol;
     private MainWindow parent;
 
     private File currentInputFile;
@@ -56,6 +63,8 @@ public class ControlPanel extends JPanel {
         topSection.add(createOptionsBar());
         topSection.add(Box.createVerticalStrut(4));
         topSection.add(createGeometrySettings());
+        topSection.add(Box.createVerticalStrut(4));
+        topSection.add(createPathOptimizationSettings());
 
         add(topSection, BorderLayout.NORTH);
 
@@ -198,6 +207,51 @@ public class ControlPanel extends JPanel {
         spinSimplify.setToolTipText("Path simplification tolerance (0 = off)");
         spinSimplify.addChangeListener(e -> schedulePreviewUpdate());
         p.add(spinSimplify);
+
+        return p;
+    }
+
+    private JPanel createPathOptimizationSettings() {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        p.setBorder(new TitledBorder("Path Optimization"));
+
+        chkLinesimplify = new JCheckBox("Linesimplify", false);
+        chkLinesimplify.addItemListener(e -> schedulePreviewUpdate());
+        p.add(chkLinesimplify);
+
+        p.add(new JLabel("Tol:"));
+        spinLinesimplifyTol = new JSpinner(new SpinnerNumberModel(0.378, 0.01, 5.0, 0.05));
+        spinLinesimplifyTol.setPreferredSize(new Dimension(62, 24));
+        spinLinesimplifyTol.setToolTipText("Linesimplify tolerance");
+        spinLinesimplifyTol.addChangeListener(e -> schedulePreviewUpdate());
+        p.add(spinLinesimplifyTol);
+
+        chkLinemerge = new JCheckBox("Linemerge", false);
+        chkLinemerge.addItemListener(e -> schedulePreviewUpdate());
+        p.add(chkLinemerge);
+
+        p.add(new JLabel("Tol:"));
+        spinLinemergeTol = new JSpinner(new SpinnerNumberModel(1.89, 0.1, 10.0, 0.1));
+        spinLinemergeTol.setPreferredSize(new Dimension(62, 24));
+        spinLinemergeTol.setToolTipText("Linemerge tolerance");
+        spinLinemergeTol.addChangeListener(e -> schedulePreviewUpdate());
+        p.add(spinLinemergeTol);
+
+        chkLinesort = new JCheckBox("Linesort", false);
+        chkLinesort.addItemListener(e -> {
+            chkLinesortTwoOpt.setEnabled(chkLinesort.isSelected());
+            schedulePreviewUpdate();
+        });
+        p.add(chkLinesort);
+
+        chkLinesortTwoOpt = new JCheckBox("2-opt", false);
+        chkLinesortTwoOpt.setEnabled(false);
+        chkLinesortTwoOpt.addItemListener(e -> schedulePreviewUpdate());
+        p.add(chkLinesortTwoOpt);
+
+        chkReloop = new JCheckBox("Reloop", false);
+        chkReloop.addItemListener(e -> schedulePreviewUpdate());
+        p.add(chkReloop);
 
         return p;
     }
@@ -473,6 +527,13 @@ public class ControlPanel extends JPanel {
                 .rotationDegrees(currentRotation)
                 .cropBounds(cropRect)
                 .optimizePaths(chkOptimize.isSelected())
+                .linesimplify(chkLinesimplify.isSelected())
+                .linesimplifyTolerance(((Number) spinLinesimplifyTol.getValue()).doubleValue())
+                .linemerge(chkLinemerge.isSelected())
+                .linemergeTolerance(((Number) spinLinemergeTol.getValue()).doubleValue())
+                .linesort(chkLinesort.isSelected())
+                .linesortTwoOpt(chkLinesortTwoOpt.isSelected())
+                .reloop(chkReloop.isSelected())
                 .hiddenLayers(hiddenLayers)
                 .strokeWidthOverrides(strokeWidthOverrides)
                 .overrides(styleOverrides)
