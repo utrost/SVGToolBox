@@ -29,7 +29,8 @@ public record Config(
         boolean linemerge,
         double linemergeTolerance,
         boolean linesort,
-        boolean linesortTwoOpt) {
+        boolean linesortTwoOpt,
+        boolean reloop) {
 
     public static class Builder {
         private String inputPath;
@@ -57,6 +58,7 @@ public record Config(
         private double linemergeTolerance = 1.89;
         private boolean linesort = false;
         private boolean linesortTwoOpt = false;
+        private boolean reloop = false;
 
         public Builder inputPath(String inputPath) {
             this.inputPath = inputPath;
@@ -183,12 +185,18 @@ public record Config(
             return this;
         }
 
+        public Builder reloop(boolean reloop) {
+            this.reloop = reloop;
+            return this;
+        }
+
         public Config build() {
             return new Config(
                     inputPath, outputPath, strokeWidth, palette, enableHatching,
                     globalStyle, overrides, strokeWidthOverrides, hiddenLayers, noHatchColors, minHatchArea, simplifyTolerance,
                     hatchPattern, hatchAngle, hatchGap, rotationDegrees, printStats, cropBounds, optimizePaths,
-                    linesimplify, linesimplifyTolerance, linemerge, linemergeTolerance, linesort, linesortTwoOpt
+                    linesimplify, linesimplifyTolerance, linemerge, linemergeTolerance, linesort, linesortTwoOpt,
+                    reloop
             );
         }
     }

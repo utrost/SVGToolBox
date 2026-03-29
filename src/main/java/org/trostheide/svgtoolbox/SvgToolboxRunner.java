@@ -58,6 +58,7 @@ public class SvgToolboxRunner {
                 .desc("Linemerge tolerance (default 1.89)").build());
         options.addOption(Option.builder().longOpt("linesort").desc("Sort paths for minimum pen travel").build());
         options.addOption(Option.builder().longOpt("linesort-twoopt").desc("Enable 2-opt improvement for linesort").build());
+        options.addOption(Option.builder().longOpt("reloop").desc("Rotate closed-path start points for minimum pen travel").build());
 
         CommandLineParser parser = new DefaultParser();
 
@@ -152,6 +153,7 @@ public class SvgToolboxRunner {
                 .linemergeTolerance(Double.parseDouble(cmd.getOptionValue("linemerge-tolerance", "1.89")))
                 .linesort(cmd.hasOption("linesort"))
                 .linesortTwoOpt(cmd.hasOption("linesort-twoopt"))
+                .reloop(cmd.hasOption("reloop"))
                 .build();
     }
 
@@ -221,6 +223,7 @@ public class SvgToolboxRunner {
         pipeline.add(new LinesimplifyProcessor());
         pipeline.add(new LinemergeProcessor());
         pipeline.add(new LinesortProcessor());
+        pipeline.add(new ReloopProcessor());
 
         // 4. Organize into layers
         pipeline.add(new LayerProcessor());
