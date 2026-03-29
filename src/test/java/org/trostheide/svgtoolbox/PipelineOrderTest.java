@@ -21,10 +21,13 @@ class PipelineOrderTest {
         pipeline.add(new PaletteProcessor());
         pipeline.add(new SimplifyProcessor());
         pipeline.add(new HatchProcessor());
+        pipeline.add(new LinesimplifyProcessor());
+        pipeline.add(new LinemergeProcessor());
+        pipeline.add(new LinesortProcessor());
         pipeline.add(new LayerProcessor());
         pipeline.add(new CropProcessor());
 
-        assertEquals(9, pipeline.size(), "Base pipeline should have 9 processors");
+        assertEquals(12, pipeline.size(), "Base pipeline should have 12 processors");
 
         // Verify order
         assertInstanceOf(VisibilityProcessor.class, pipeline.get(0), "VisibilityProcessor should be first");
@@ -34,8 +37,11 @@ class PipelineOrderTest {
         assertInstanceOf(PaletteProcessor.class, pipeline.get(4), "PaletteProcessor should be fifth");
         assertInstanceOf(SimplifyProcessor.class, pipeline.get(5), "SimplifyProcessor should be sixth");
         assertInstanceOf(HatchProcessor.class, pipeline.get(6), "HatchProcessor should be seventh");
-        assertInstanceOf(LayerProcessor.class, pipeline.get(7), "LayerProcessor should be eighth");
-        assertInstanceOf(CropProcessor.class, pipeline.get(8), "CropProcessor should be ninth");
+        assertInstanceOf(LinesimplifyProcessor.class, pipeline.get(7), "LinesimplifyProcessor should be eighth");
+        assertInstanceOf(LinemergeProcessor.class, pipeline.get(8), "LinemergeProcessor should be ninth");
+        assertInstanceOf(LinesortProcessor.class, pipeline.get(9), "LinesortProcessor should be tenth");
+        assertInstanceOf(LayerProcessor.class, pipeline.get(10), "LayerProcessor should be eleventh");
+        assertInstanceOf(CropProcessor.class, pipeline.get(11), "CropProcessor should be twelfth");
     }
 
     @Test
@@ -53,6 +59,9 @@ class PipelineOrderTest {
         pipeline.add(new PaletteProcessor());
         pipeline.add(new SimplifyProcessor());
         pipeline.add(new HatchProcessor());
+        pipeline.add(new LinesimplifyProcessor());
+        pipeline.add(new LinemergeProcessor());
+        pipeline.add(new LinesortProcessor());
         pipeline.add(new LayerProcessor());
         pipeline.add(new CropProcessor());
 
@@ -60,8 +69,8 @@ class PipelineOrderTest {
             pipeline.add(new PathOptimizeProcessor());
         }
 
-        assertEquals(10, pipeline.size(), "Pipeline with optimize should have 10 processors");
-        assertInstanceOf(PathOptimizeProcessor.class, pipeline.get(9),
+        assertEquals(13, pipeline.size(), "Pipeline with optimize should have 13 processors");
+        assertInstanceOf(PathOptimizeProcessor.class, pipeline.get(12),
                 "PathOptimizeProcessor should be last");
     }
 

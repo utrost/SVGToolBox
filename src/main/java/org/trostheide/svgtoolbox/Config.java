@@ -23,7 +23,13 @@ public record Config(
         double rotationDegrees,
         boolean printStats,
         java.awt.geom.Rectangle2D cropBounds,
-        boolean optimizePaths) {
+        boolean optimizePaths,
+        boolean linesimplify,
+        double linesimplifyTolerance,
+        boolean linemerge,
+        double linemergeTolerance,
+        boolean linesort,
+        boolean linesortTwoOpt) {
 
     public static class Builder {
         private String inputPath;
@@ -45,6 +51,12 @@ public record Config(
         private boolean printStats = false;
         private java.awt.geom.Rectangle2D cropBounds = null;
         private boolean optimizePaths = false;
+        private boolean linesimplify = false;
+        private double linesimplifyTolerance = 0.378;
+        private boolean linemerge = false;
+        private double linemergeTolerance = 1.89;
+        private boolean linesort = false;
+        private boolean linesortTwoOpt = false;
 
         public Builder inputPath(String inputPath) {
             this.inputPath = inputPath;
@@ -141,11 +153,42 @@ public record Config(
             return this;
         }
 
+        public Builder linesimplify(boolean linesimplify) {
+            this.linesimplify = linesimplify;
+            return this;
+        }
+
+        public Builder linesimplifyTolerance(double linesimplifyTolerance) {
+            this.linesimplifyTolerance = linesimplifyTolerance;
+            return this;
+        }
+
+        public Builder linemerge(boolean linemerge) {
+            this.linemerge = linemerge;
+            return this;
+        }
+
+        public Builder linemergeTolerance(double linemergeTolerance) {
+            this.linemergeTolerance = linemergeTolerance;
+            return this;
+        }
+
+        public Builder linesort(boolean linesort) {
+            this.linesort = linesort;
+            return this;
+        }
+
+        public Builder linesortTwoOpt(boolean linesortTwoOpt) {
+            this.linesortTwoOpt = linesortTwoOpt;
+            return this;
+        }
+
         public Config build() {
             return new Config(
                     inputPath, outputPath, strokeWidth, palette, enableHatching,
                     globalStyle, overrides, strokeWidthOverrides, hiddenLayers, noHatchColors, minHatchArea, simplifyTolerance,
-                    hatchPattern, hatchAngle, hatchGap, rotationDegrees, printStats, cropBounds, optimizePaths
+                    hatchPattern, hatchAngle, hatchGap, rotationDegrees, printStats, cropBounds, optimizePaths,
+                    linesimplify, linesimplifyTolerance, linemerge, linemergeTolerance, linesort, linesortTwoOpt
             );
         }
     }

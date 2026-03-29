@@ -50,6 +50,14 @@ public class SvgToolboxRunner {
         options.addOption(Option.builder().longOpt("stats").desc("Print statistics").build());
         options.addOption(Option.builder().longOpt("crop").hasArg().desc("Crop (WxH, A4, Letter)").build());
         options.addOption(Option.builder().longOpt("optimize").desc("Optimize path order for plotting").build());
+        options.addOption(Option.builder().longOpt("linesimplify").desc("Simplify path lines (RDP)").build());
+        options.addOption(Option.builder().longOpt("linesimplify-tolerance").hasArg().type(Number.class)
+                .desc("Linesimplify tolerance (default 0.378)").build());
+        options.addOption(Option.builder().longOpt("linemerge").desc("Merge adjacent open paths").build());
+        options.addOption(Option.builder().longOpt("linemerge-tolerance").hasArg().type(Number.class)
+                .desc("Linemerge tolerance (default 1.89)").build());
+        options.addOption(Option.builder().longOpt("linesort").desc("Sort paths for minimum pen travel").build());
+        options.addOption(Option.builder().longOpt("linesort-twoopt").desc("Enable 2-opt improvement for linesort").build());
 
         CommandLineParser parser = new DefaultParser();
 
@@ -138,6 +146,12 @@ public class SvgToolboxRunner {
                 .printStats(cmd.hasOption("stats"))
                 .cropBounds(parseCrop(cmd.getOptionValue("crop")))
                 .optimizePaths(cmd.hasOption("optimize"))
+                .linesimplify(cmd.hasOption("linesimplify"))
+                .linesimplifyTolerance(Double.parseDouble(cmd.getOptionValue("linesimplify-tolerance", "0.378")))
+                .linemerge(cmd.hasOption("linemerge"))
+                .linemergeTolerance(Double.parseDouble(cmd.getOptionValue("linemerge-tolerance", "1.89")))
+                .linesort(cmd.hasOption("linesort"))
+                .linesortTwoOpt(cmd.hasOption("linesort-twoopt"))
                 .build();
     }
 
@@ -202,6 +216,11 @@ public class SvgToolboxRunner {
 
         // 2. Generate hatched lines (inside groups with transforms)
         pipeline.add(new HatchProcessor());
+
+        // 3. Plotter path optimization
+        pipeline.add(new LinesimplifyProcessor());
+        pipeline.add(new LinemergeProcessor());
+        pipeline.add(new LinesortProcessor());
 
         // 4. Organize into layers
         pipeline.add(new LayerProcessor());
